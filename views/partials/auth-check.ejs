@@ -1,0 +1,24 @@
+<script>
+    // Check session is still valid on every page load
+    fetch('/check-session')
+        .then(res => res.json())
+        .then(data => {
+            if (!data.loggedIn) {
+                window.location.replace('/');
+            }
+        });
+
+    // Prevent back button
+    history.pushState(null, null, location.href);
+    window.addEventListener('popstate', function() {
+        fetch('/check-session')
+            .then(res => res.json())
+            .then(data => {
+                if (!data.loggedIn) {
+                    window.location.replace('/');
+                } else {
+                    history.pushState(null, null, location.href);
+                }
+            });
+    });
+</script>

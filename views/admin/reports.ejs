@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RentEase — Reports</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+<div class="app-wrapper">
+    <%- include('../partials/sidebar-admin') %>
+
+    <div class="main-content">
+        <div class="topbar">
+            <div class="topbar-title">Financial Reports</div>
+            <div class="topbar-user"><%= user.name %></div>
+        </div>
+
+        <div class="page-content">
+
+            <!-- Filter Bar -->
+            <div class="card">
+                <div class="modal-body">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Select Month</label>
+                            <select class="form-control">
+                                <option>May 2026</option>
+                                <option>April 2026</option>
+                                <option>March 2026</option>
+                                <option>February 2026</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Select Property</label>
+                            <select class="form-control">
+                                <option>All Properties</option>
+                                <option>Sunrise Apartments</option>
+                                <option>Green Valley</option>
+                                <option>Blue Heights</option>
+                                <option>Palm Grove</option>
+                            </select>
+                        </div>
+                        <div class="form-group" style="display:flex; align-items:flex-end;">
+                            <button class="btn-primary-custom btn-inline">Generate Report</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Summary Stats -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-label">Total Rent Expected</div>
+                    <div class="stat-value">₹<%= Number(summary.expected_rent || 0).toLocaleString('en-IN') %></div>
+                    <div class="stat-sub"><%= month %>/<%= year %></div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Rent Collected</div>
+                    <div class="stat-value" style="color:#27ae60;">₹<%= Number(summary.rent_collected || 0).toLocaleString('en-IN') %></div>
+                    <div class="stat-sub">This month</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Total Properties</div>
+                    <div class="stat-value"><%= summary.total_properties %></div>
+                    <div class="stat-sub">Registered</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Active Tenants</div>
+                    <div class="stat-value"><%= summary.total_tenants %></div>
+                    <div class="stat-sub">Currently renting</div>
+                </div>
+            </div>
+
+            <!-- Occupancy Summary -->
+            <div class="stats-grid" style="grid-template-columns: repeat(3, 1fr);">
+                <div class="stat-card">
+                    <div class="stat-label">Total Apartments</div>
+                    <div class="stat-value"><%= summary.total_apartments %></div>
+                    <div class="stat-sub">Across all properties</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Occupied</div>
+                    <div class="stat-value" style="color:#27ae60;"><%= summary.occupied_apartments %></div>
+                    <div class="stat-sub"><%= Math.round((summary.occupied_apartments / summary.total_apartments) * 100) %>% occupancy rate</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Vacant</div>
+                    <div class="stat-value" style="color:#7f8c8d;"><%= summary.total_apartments - summary.occupied_apartments %></div>
+                    <div class="stat-sub">Available for rent</div>
+                </div>
+            </div>
+
+            <!-- Property Breakdown Table -->
+            <div class="card">
+                <div class="card-header">
+                    <h3>Property-wise Breakdown — May 2026</h3>
+                    <button class="btn-primary-custom btn-inline">Download PDF</button>
+                </div>
+                <table class="data-table">
+                    <tbody>
+                        <% breakdown.forEach(function(row) { %>
+                        <tr>
+                            <td><%= row.name %></td>
+                            <td><%= row.total_units %></td>
+                            <td><%= row.occupied %></td>
+                            <td>₹<%= Number(row.expected_rent).toLocaleString('en-IN') %></td>
+                            <td><span style="color:#27ae60; font-weight:600;">₹<%= Number(row.collected).toLocaleString('en-IN') %></span></td>
+                            <td><span style="color:#f39c12; font-weight:600;">₹<%= Number(row.expected_rent - row.collected).toLocaleString('en-IN') %></span></td>
+                            <td><span style="color:#e74c3c; font-weight:600;">₹0</span></td>
+                        </tr>
+                        <% }); %>
+                    </tbody>
+                </table>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<%- include('../partials/auth-check') %>
+
+</body>
+</html>

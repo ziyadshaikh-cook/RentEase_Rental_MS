@@ -1,0 +1,14 @@
+<div class="sidebar">
+    <div class="sidebar-logo">
+        <h2>Rent<span>Ease</span></h2>
+    </div>
+    <nav class="sidebar-nav">
+        <a href="/admin/dashboard" class="nav-item <%= active === 'dashboard' ? 'active' : '' %>">Dashboard</a>
+        <a href="/admin/properties" class="nav-item <%= active === 'properties' ? 'active' : '' %>">Properties</a>
+        <a href="/admin/users" class="nav-item <%= active === 'users' ? 'active' : '' %>">Users</a>
+        <a href="/admin/reports" class="nav-item <%= active === 'reports' ? 'active' : '' %>">Reports</a>
+    </nav>
+    <div class="sidebar-footer">
+        <a href="/logout" class="nav-item logout">Logout</a>
+    </div>
+</div>

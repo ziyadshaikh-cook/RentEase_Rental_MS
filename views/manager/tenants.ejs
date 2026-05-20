@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RentEase — Tenants</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+<div class="app-wrapper">
+    <%- include('../partials/sidebar-manager') %>
+
+    <div class="main-content">
+        <div class="topbar">
+            <div class="topbar-title">Tenants</div>
+            <div class="topbar-user"><%= user.name %> — Property Manager</div>
+        </div>
+
+        <div class="page-content">
+
+            <div class="page-actions">
+                <button class="btn-primary-custom btn-inline" onclick="document.getElementById('addTenantModal').style.display='flex'">
+                    + Add Tenant
+                </button>
+            </div>
+
+            <!-- Tenants Table -->
+            <div class="card">
+                <div class="card-header">
+                    <h3>All Tenants</h3>
+                    <span class="badge badge-green">16 Active</span>
+                </div>
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Name</th>
+                            <th>Email</th>
+                            <th>Phone</th>
+                            <th>Apartment</th>
+                            <th>Lease Start</th>
+                            <th>Lease End</th>
+                            <th>Deposit</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% tenants.forEach(function(tenant, index) { %>
+                        <tr>
+                            <td><%= index + 1 %></td>
+                            <td><%= tenant.name %></td>
+                            <td><%= tenant.email %></td>
+                            <td><%= tenant.phone || '—' %></td>
+                            <td><%= tenant.property_name %> — <%= tenant.apt_number %></td>
+                            <td><%= new Date(tenant.lease_start).toLocaleDateString('en-IN') %></td>
+                            <td><%= tenant.lease_end ? new Date(tenant.lease_end).toLocaleDateString('en-IN') : '—' %></td>
+                            <td>₹<%= Number(tenant.deposit_amount).toLocaleString('en-IN') %></td>
+                            <td>
+                                <a href="#" class="action-link edit">Edit</a>
+                                <a href="#" class="action-link delete">Remove</a>
+                            </td>
+                        </tr>
+                        <% }); %>
+                    </tbody>
+                </table>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<!-- Add Tenant Modal -->
+<div class="modal-overlay" id="addTenantModal">
+    <div class="modal">
+        <div class="modal-header">
+            <h3>Add New Tenant</h3>
+            <button class="modal-close" onclick="document.getElementById('addTenantModal').style.display='none'">✕</button>
+        </div>
+        <div class="modal-body">
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label">Full Name</label>
+                    <input type="text" class="form-control" placeholder="Enter full name">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Phone</label>
+                    <input type="text" class="form-control" placeholder="10-digit number">
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Email Address</label>
+                <input type="email" class="form-control" placeholder="Enter email">
+            </div>
+            <div class="form-group">
+                <label class="form-label">ID Proof Number</label>
+                <input type="text" class="form-control" placeholder="Aadhar or PAN number">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Assign Apartment</label>
+                <select class="form-control" name="apartment_id">
+                    <option value="">Select Vacant Apartment</option>
+                    <% vacantApts.forEach(function(apt) { %>
+                    <option value="<%= apt.apartment_id %>"><%= apt.property_name %> — <%= apt.apt_number %></option>
+                    <% }); %>
+</select>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label">Lease Start Date</label>
+                    <input type="date" class="form-control">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Lease End Date</label>
+                    <input type="date" class="form-control">
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Deposit Amount (₹)</label>
+                <input type="number" class="form-control" placeholder="e.g. 24000">
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn-cancel" onclick="document.getElementById('addTenantModal').style.display='none'">Cancel</button>
+            <button class="btn-primary-custom btn-inline">Add Tenant</button>
+        </div>
+    </div>
+</div>
+
+<%- include('../partials/auth-check') %>
+
+</body>
+</html>

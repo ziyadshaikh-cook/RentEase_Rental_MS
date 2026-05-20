@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RentEase — Admin Dashboard</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+<div class="app-wrapper">
+    <%- include('../partials/sidebar-admin') %>
+
+    <div class="main-content">
+        <div class="topbar">
+            <div class="topbar-title">Dashboard</div>
+            <div class="topbar-user"><%= user.name %></div>
+        </div>
+
+        <div class="page-content">
+
+            <!-- Stat Cards -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-label">Total Properties</div>
+                    <div class="stat-value"><%= data.totalProperties %></div>
+                    <div class="stat-sub">Buildings registered</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Total Apartments</div>
+                    <div class="stat-value"><%= data.totalApartments %></div>
+                    <div class="stat-sub">Units across all properties</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Active Tenants</div>
+                    <div class="stat-value"><%= data.totalTenants %></div>
+                    <div class="stat-sub">Currently occupied</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Rent Collected</div>
+                    <div class="stat-value">₹<%= Number(data.rentCollected).toLocaleString('en-IN') %></div>
+                    <div class="stat-sub">This month</div>
+                </div>
+            </div>
+
+            <!-- Recent Properties Table -->
+            <div class="card">
+                <div class="card-header">
+                    <h3>Properties Overview</h3>
+                    <a href="/admin/properties" class="btn-small">View All</a>
+                </div>
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Property Name</th>
+                            <th>Address</th>
+                            <th>Apartments</th>
+                            <th>Occupied</th>
+                            <th>Manager</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    <% data.properties.forEach(function(property) { %>
+                    <tr>
+                        <td><%= property.name %></td>
+                        <td><%= property.city %>, <%= property.state %></td>
+                        <td><%= property.total_apts || 0 %></td>
+                        <td><%= property.occupied_apts || 0 %></td>
+                        <td><%= property.manager_name || 'Unassigned' %></td>
+                        <td><span class="badge badge-green">Active</span></td>
+                    </tr>
+                    <% }); %>
+                </tbody>
+                </table>
+            </div>
+
+            <!-- Pending Dues -->
+            <div class="card">
+                <div class="card-header">
+                    <h3>Pending Dues</h3>
+                    <span class="badge badge-red">13 Overdue</span>
+                </div>
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Tenant</th>
+                            <th>Property</th>
+                            <th>Apartment</th>
+                            <th>Amount Due</th>
+                            <th>Due Date</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    <% if (data.pendingDues.length === 0) { %>
+                    <tr>
+                        <td colspan="6" style="text-align:center; color:#7f8c8d;">No pending dues this month</td>
+                    </tr>
+                    <% } else { %>
+                    <% data.pendingDues.forEach(function(due) { %>
+                    <tr>
+                        <td><%= due.name %></td>
+                        <td><%= due.property_name %></td>
+                        <td><%= due.apt_number %></td>
+                        <td>₹<%= Number(due.rent_amount).toLocaleString('en-IN') %></td>
+                        <td><%= due.due_date %></td>
+                        <td><span class="badge badge-orange">Pending</span></td>
+                    </tr>
+                    <% }); %>
+                    <% } %>
+                </tbody>
+                </table>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<%- include('../partials/auth-check') %>
+
+</body>
+</html>

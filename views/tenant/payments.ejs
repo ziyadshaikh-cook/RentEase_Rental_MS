@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RentEase — Payment History</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+<div class="app-wrapper">
+    <%- include('../partials/sidebar-tenant') %>
+
+    <div class="main-content">
+        <div class="topbar">
+            <div class="topbar-title">Payment History</div>
+            <div class="topbar-user"><%= user.name %> — Tenant</div>
+        </div>
+
+        <div class="page-content">
+
+            <!-- Summary Stats -->
+            <div class="stats-grid" style="grid-template-columns: repeat(3, 1fr);">
+                <div class="stat-card">
+                    <div class="stat-label">Total Paid</div>
+                    <div class="stat-value" style="color:#27ae60;">₹<%= Number(stats.total_paid || 0).toLocaleString('en-IN') %></div>
+                    <div class="stat-sub">All time</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Total Payments</div>
+                    <div class="stat-value"><%= stats.total_payments || 0 %></div>
+                    <div class="stat-sub">Recorded payments</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Last Payment</div>
+                    <div class="stat-value" style="font-size:18px;">
+                        <%= payments.length > 0 ? new Date(payments[0].payment_date).toLocaleDateString('en-IN') : '—' %>
+                    </div>
+                    <div class="stat-sub">
+                        <%= payments.length > 0 ? '₹' + Number(payments[0].amount).toLocaleString('en-IN') : 'No payments yet' %>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Payment History Table -->
+            <div class="card">
+                <div class="card-header">
+                    <h3>All Payments</h3>
+                    <span class="badge badge-green">13 Records</span>
+                </div>
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Receipt No</th>
+                            <th>Month</th>
+                            <th>Amount</th>
+                            <th>Paid On</th>
+                            <th>Method</th>
+                            <th>Status</th>
+                            <th>Receipt</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% payments.forEach(function(pay, index) { %>
+                        <tr>
+                            <td><%= index + 1 %></td>
+                            <td><%= pay.receipt_number %></td>
+                            <td><%= pay.month %>/<%= pay.year %></td>
+                            <td>₹<%= Number(pay.amount).toLocaleString('en-IN') %></td>
+                            <td><%= new Date(pay.payment_date).toLocaleDateString('en-IN') %></td>
+                            <td><%= pay.payment_method.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase()) %></td>
+                            <td><span class="badge badge-green">Paid</span></td>
+                            <td><a href="#" class="action-link edit">Download</a></td>
+                        </tr>
+                        <% }); %>
+                    </tbody>
+                </table>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<%- include('../partials/auth-check') %>
+
+</body>
+</html>

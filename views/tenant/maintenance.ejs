@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RentEase — Maintenance</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+<div class="app-wrapper">
+    <%- include('../partials/sidebar-tenant') %>
+
+    <div class="main-content">
+        <div class="topbar">
+            <div class="topbar-title">Maintenance Requests</div>
+            <div class="topbar-user"><%= user.name %> — Tenant</div>
+        </div>
+
+        <div class="page-content">
+
+            <div class="page-actions">
+                <button class="btn-primary-custom btn-inline" onclick="document.getElementById('newRequestModal').style.display='flex'">
+                    + New Request
+                </button>
+            </div>
+
+            <!-- Summary Stats -->
+            <div class="stats-grid" style="grid-template-columns: repeat(3, 1fr);">
+                <div class="stat-card">
+                    <div class="stat-label">Open</div>
+                    <div class="stat-value" style="color:#e74c3c;"><%= stats.open_count || 0 %></div>
+                    <div class="stat-sub">Awaiting action</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">In Progress</div>
+                    <div class="stat-value" style="color:#f39c12;"><%= stats.in_progress_count || 0 %></div>
+                    <div class="stat-sub">Being resolved</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Resolved</div>
+                    <div class="stat-value" style="color:#27ae60;"><%= stats.resolved_count || 0 %></div>
+                    <div class="stat-sub">Completed</div>
+                </div>
+            </div>
+
+            <!-- Requests Table -->
+            <div class="card">
+                <div class="card-header">
+                    <h3>My Maintenance Requests</h3>
+                    <span class="badge badge-green">5 Total</span>
+                </div>
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Issue Title</th>
+                            <th>Description</th>
+                            <th>Priority</th>
+                            <th>Status</th>
+                            <th>Submitted</th>
+                            <th>Manager Notes</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% requests.forEach(function(req, index) { %>
+                        <tr>
+                            <td><%= index + 1 %></td>
+                            <td><%= req.title %></td>
+                            <td><%= req.description %></td>
+                            <td>
+                                <span class="badge <%= req.priority === 'high' ? 'badge-red' : req.priority === 'medium' ? 'badge-orange' : 'badge-green' %>">
+                                    <%= req.priority.charAt(0).toUpperCase() + req.priority.slice(1) %>
+                                </span>
+                            </td>
+                            <td>
+                                <span class="badge <%= req.status === 'resolved' ? 'badge-green' : req.status === 'in_progress' ? 'badge-orange' : 'badge-red' %>">
+                                    <%= req.status.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase()) %>
+                                </span>
+                            </td>
+                            <td><%= new Date(req.created_at).toLocaleDateString('en-IN') %></td>
+                            <td><%= req.manager_notes || '—' %></td>
+                        </tr>
+                        <% }); %>
+                    </tbody>
+                </table>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<!-- New Request Modal -->
+<div class="modal-overlay" id="newRequestModal">
+    <div class="modal">
+        <div class="modal-header">
+            <h3>Submit Maintenance Request</h3>
+            <button class="modal-close" onclick="document.getElementById('newRequestModal').style.display='none'">✕</button>
+        </div>
+        <div class="modal-body">
+            <div class="form-group">
+                <label class="form-label">Issue Title</label>
+                <input type="text" class="form-control" placeholder="Short description of the issue">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Description</label>
+                <textarea class="form-control" rows="3" placeholder="Describe the issue in detail..."></textarea>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Priority</label>
+                <select class="form-control">
+                    <option>Low</option>
+                    <option selected>Medium</option>
+                    <option>High</option>
+                </select>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn-cancel" onclick="document.getElementById('newRequestModal').style.display='none'">Cancel</button>
+            <button class="btn-primary-custom btn-inline">Submit Request</button>
+        </div>
+    </div>
+</div>
+
+<%- include('../partials/auth-check') %>
+
+</body>
+</html>

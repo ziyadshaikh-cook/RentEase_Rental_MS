@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RentEase — Tenant Dashboard</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+<div class="app-wrapper">
+    <%- include('../partials/sidebar-tenant') %>
+
+    <div class="main-content">
+        <div class="topbar">
+            <div class="topbar-title">Dashboard</div>
+            <div class="topbar-user"><%= user.name %> — Tenant</div>
+        </div>
+
+        <div class="page-content">
+
+            <!-- Rent Status Card — most important for tenant -->
+            <div class="rent-status-banner <%= currentPayment ? 'paid' : 'pending' %>">
+                <div class="rent-status-left">
+                    <div class="rent-status-label">Rent Status — <%= currentMonth %>/<%= currentYear %></div>
+                    <div class="rent-status-amount">₹<%= tenant.rent_amount ? Number(tenant.rent_amount).toLocaleString('en-IN') : '—' %></div>
+                    <div class="rent-status-sub"><%= tenant.property_name %> — <%= tenant.apt_number %></div>
+                </div>
+                <div class="rent-status-right">
+                    <span class="badge-large <%= currentPayment ? 'badge-large-green' : 'badge-large-pending' %>">
+                        <%= currentPayment ? 'Paid' : 'Pending' %>
+                    </span>
+                    <div class="rent-status-date">
+                        <% if (currentPayment) { %>
+                            Paid on <%= new Date(currentPayment.payment_date).toLocaleDateString('en-IN') %>
+                        <% } else { %>
+                            Due on 1st of this month
+                        <% } %>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Info Cards -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-label">Monthly Rent</div>
+                    <div class="stat-value">₹<%= Number(tenant.rent_amount || 0).toLocaleString('en-IN') %></div>
+                    <div class="stat-sub">Due on 1st of every month</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Security Deposit</div>
+                    <div class="stat-value">₹<%= Number(tenant.deposit_amount || 0).toLocaleString('en-IN') %></div>
+                    <div class="stat-sub">Paid at lease start</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Lease Start</div>
+                    <div class="stat-value" style="font-size:20px;"><%= new Date(tenant.lease_start).toLocaleDateString('en-IN') %></div>
+                    <div class="stat-sub">Lease End: <%= tenant.lease_end ? new Date(tenant.lease_end).toLocaleDateString('en-IN') : '—' %></div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Open Requests</div>
+                    <div class="stat-value" style="color:#f39c12;"><%= openRequests %></div>
+                    <div class="stat-sub">Maintenance pending</div>
+                </div>
+            </div>
+
+            <!-- Apartment Details -->
+            <div class="detail-grid">
+                <div class="detail-item">
+                    <div class="detail-label">Property</div>
+                    <div class="detail-value"><%= tenant.property_name %></div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">Apartment</div>
+                    <div class="detail-value"><%= tenant.apt_number %></div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">Floor</div>
+                    <div class="detail-value"><%= tenant.floor %>st Floor</div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">Bedrooms</div>
+                    <div class="detail-value"><%= tenant.bedrooms %> BHK</div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">Address</div>
+                    <div class="detail-value"><%= tenant.city %>, <%= tenant.state %> — <%= tenant.pincode %></div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">Property Manager</div>
+                    <div class="detail-value"><%= tenant.manager_name %></div>
+                </div>
+            </div>
+
+            <!-- Recent Payments -->
+            <div class="card">
+                <div class="card-header">
+                    <h3>Recent Payments</h3>
+                    <a href="/tenant/payments" class="btn-small">View All</a>
+                </div>
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Month</th>
+                            <th>Amount</th>
+                            <th>Paid On</th>
+                            <th>Method</th>
+                            <th>Receipt</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>May 2026</td>
+                            <td>₹12,000</td>
+                            <td>May 2, 2026</td>
+                            <td>Cash</td>
+                            <td><a href="#" class="action-link edit">Download</a></td>
+                        </tr>
+                        <tr>
+                            <td>April 2026</td>
+                            <td>₹12,000</td>
+                            <td>Apr 1, 2026</td>
+                            <td>Cash</td>
+                            <td><a href="#" class="action-link edit">Download</a></td>
+                        </tr>
+                        <tr>
+                            <td>March 2026</td>
+                            <td>₹12,000</td>
+                            <td>Mar 3, 2026</td>
+                            <td>Cash</td>
+                            <td><a href="#" class="action-link edit">Download</a></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<%- include('../partials/auth-check') %>
+
+</body>
+</html>

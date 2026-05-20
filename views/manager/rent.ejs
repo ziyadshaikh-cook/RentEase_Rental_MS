@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RentEase — Rent Collection</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+<div class="app-wrapper">
+    <%- include('../partials/sidebar-manager') %>
+
+    <div class="main-content">
+        <div class="topbar">
+            <div class="topbar-title">Rent Collection</div>
+            <div class="topbar-user"><%= user.name %> — Property Manager</div>
+        </div>
+
+        <div class="page-content">
+
+            <div class="page-actions">
+                <button class="btn-primary-custom btn-inline" onclick="document.getElementById('recordPaymentModal').style.display='flex'">
+                    + Record Payment
+                </button>
+            </div>
+
+            <!-- Summary Stats -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-label">Total Expected</div>
+                    <div class="stat-value">₹<%= Number(summary.total_expected || 0).toLocaleString('en-IN') %></div>
+                    <div class="stat-sub">This month</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Collected</div>
+                    <div class="stat-value" style="color:#27ae60;">₹<%= Number(summary.total_collected || 0).toLocaleString('en-IN') %></div>
+                    <div class="stat-sub">Payments recorded</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Pending</div>
+                    <div class="stat-value" style="color:#f39c12;">₹<%= Number((summary.total_expected || 0) - (summary.total_collected || 0)).toLocaleString('en-IN') %></div>
+                    <div class="stat-sub">Not yet paid</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Collection Rate</div>
+                    <div class="stat-value" style="color:#3498DB;">
+                        <%= summary.total_expected > 0 ? Math.round((summary.total_collected / summary.total_expected) * 100) : 0 %>%
+                    </div>
+                    <div class="stat-sub">This month</div>
+                </div>
+            </div>
+
+            <!-- Rent Collection Table -->
+            <div class="card">
+                <div class="card-header">
+                    <h3>Rent Status — May 2026</h3>
+                    <span class="badge badge-green">16 Tenants</span>
+                </div>
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Tenant</th>
+                            <th>Apartment</th>
+                            <th>Rent Amount</th>
+                            <th>Due Date</th>
+                            <th>Paid On</th>
+                            <th>Method</th>
+                            <th>Status</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% rentStatus.forEach(function(row) { %>
+                        <tr>
+                            <td><%= row.name %></td>
+                            <td><%= row.property_name %> — <%= row.apt_number %></td>
+                            <td>₹<%= Number(row.rent_amount).toLocaleString('en-IN') %></td>
+                            <td>1st of every month</td>
+                            <td><%= row.payment_date ? new Date(row.payment_date).toLocaleDateString('en-IN') : '—' %></td>
+                            <td><%= row.payment_method ? row.payment_method.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase()) : '—' %></td>
+                            <td>
+                                <span class="badge <%= row.status === 'Paid' ? 'badge-green' : row.status === 'Overdue' ? 'badge-red' : 'badge-orange' %>">
+                                    <%= row.status %>
+                                </span>
+                            </td>
+                            <td>
+                                <% if (row.status === 'Paid') { %>
+                                    <a href="#" class="action-link edit">Receipt</a>
+                                <% } else { %>
+                                    <a href="#" class="action-link edit">Record</a>
+                                <% } %>
+                            </td>
+                        </tr>
+                        <% }); %>
+                    </tbody>
+                </table>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<!-- Record Payment Modal -->
+<div class="modal-overlay" id="recordPaymentModal">
+    <div class="modal">
+        <div class="modal-header">
+            <h3>Record Rent Payment</h3>
+            <button class="modal-close" onclick="document.getElementById('recordPaymentModal').style.display='none'">✕</button>
+        </div>
+        <div class="modal-body">
+            <div class="form-group">
+                <label class="form-label">Select Tenant</label>
+                <select class="form-control" name="tenant_id">
+                    <option value="">Select Tenant</option>
+                    <% tenants.forEach(function(tenant) { %>
+                    <option value="<%= tenant.tenant_id %>">
+                        <%= tenant.name %> — <%= tenant.property_name %> <%= tenant.apt_number %>
+                    </option>
+                    <% }); %>
+                </select>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label">Payment Amount (₹)</label>
+                    <input type="number" class="form-control" placeholder="e.g. 12000">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Payment Date</label>
+                    <input type="date" class="form-control">
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Payment Method</label>
+                <select class="form-control">
+                    <option>Cash</option>
+                    <option>Bank Transfer</option>
+                    <option>Cheque</option>
+                </select>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label">Month</label>
+                    <select class="form-control">
+                        <option>May 2026</option>
+                        <option>April 2026</option>
+                        <option>March 2026</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Notes (Optional)</label>
+                    <input type="text" class="form-control" placeholder="Any additional notes">
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn-cancel" onclick="document.getElementById('recordPaymentModal').style.display='none'">Cancel</button>
+            <button class="btn-primary-custom btn-inline">Save Payment</button>
+        </div>
+    </div>
+</div>
+
+<%- include('../partials/auth-check') %>
+
+</body>
+</html>

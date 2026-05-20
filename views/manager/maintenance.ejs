@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RentEase — Maintenance</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+<div class="app-wrapper">
+    <%- include('../partials/sidebar-manager') %>
+
+    <div class="main-content">
+        <div class="topbar">
+            <div class="topbar-title">Maintenance Requests</div>
+            <div class="topbar-user"><%= user.name %> — Property Manager</div>
+        </div>
+
+        <div class="page-content">
+
+            <!-- Summary Stats -->
+            <div class="stats-grid" style="grid-template-columns: repeat(3, 1fr);">
+                <div class="stat-card">
+                    <div class="stat-label">Open Requests</div>
+                    <div class="stat-value" style="color:#e74c3c;"><%= stats.open_count || 0 %></div>
+                    <div class="stat-sub">Needs attention</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">In Progress</div>
+                    <div class="stat-value" style="color:#f39c12;"><%= stats.in_progress_count || 0 %></div>
+                    <div class="stat-sub">Currently being resolved</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Resolved</div>
+                    <div class="stat-value" style="color:#27ae60;"><%= stats.resolved_count || 0 %></div>
+                    <div class="stat-sub">Completed</div>
+                </div>
+            </div>
+
+            <!-- Filter Bar -->
+            <div class="card">
+                <div class="modal-body">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">Filter by Status</label>
+                            <select class="form-control">
+                                <option>All</option>
+                                <option>Open</option>
+                                <option>In Progress</option>
+                                <option>Resolved</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Filter by Priority</label>
+                            <select class="form-control">
+                                <option>All</option>
+                                <option>High</option>
+                                <option>Medium</option>
+                                <option>Low</option>
+                            </select>
+                        </div>
+                        <div class="form-group" style="display:flex; align-items:flex-end;">
+                            <button class="btn-primary-custom btn-inline">Apply Filter</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Maintenance Table -->
+            <div class="card">
+                <div class="card-header">
+                    <h3>All Maintenance Requests</h3>
+                    <span class="badge badge-red">3 Open</span>
+                </div>
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Tenant</th>
+                            <th>Apartment</th>
+                            <th>Issue</th>
+                            <th>Priority</th>
+                            <th>Status</th>
+                            <th>Date</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% requests.forEach(function(req, index) { %>
+                        <tr>
+                            <td><%= index + 1 %></td>
+                            <td><%= req.tenant_name %></td>
+                            <td><%= req.property_name %> — <%= req.apt_number %></td>
+                            <td><%= req.title %></td>
+                            <td>
+                                <span class="badge <%= req.priority === 'high' ? 'badge-red' : req.priority === 'medium' ? 'badge-orange' : 'badge-green' %>">
+                                    <%= req.priority.charAt(0).toUpperCase() + req.priority.slice(1) %>
+                                </span>
+                            </td>
+                            <td>
+                                <span class="badge <%= req.status === 'resolved' ? 'badge-green' : req.status === 'in_progress' ? 'badge-orange' : 'badge-red' %>">
+                                    <%= req.status.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase()) %>
+                                </span>
+                            </td>
+                            <td><%= new Date(req.created_at).toLocaleDateString('en-IN') %></td>
+                            <td><a href="#" class="action-link edit" onclick="document.getElementById('updateModal').style.display='flex'">Update</a></td>
+                        </tr>
+                        <% }); %>
+                    </tbody>
+                </table>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<!-- Update Request Modal -->
+<div class="modal-overlay" id="updateModal">
+    <div class="modal">
+        <div class="modal-header">
+            <h3>Update Maintenance Request</h3>
+            <button class="modal-close" onclick="document.getElementById('updateModal').style.display='none'">✕</button>
+        </div>
+        <div class="modal-body">
+            <div class="form-group">
+                <label class="form-label">Issue</label>
+                <input type="text" class="form-control" value="Water leakage in bathroom" readonly>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Update Status</label>
+                <select class="form-control">
+                    <option>Open</option>
+                    <option selected>In Progress</option>
+                    <option>Resolved</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Manager Notes</label>
+                <textarea class="form-control" rows="3" placeholder="Add notes about the resolution...">Plumber scheduled for May 20</textarea>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn-cancel" onclick="document.getElementById('updateModal').style.display='none'">Cancel</button>
+            <button class="btn-primary-custom btn-inline">Save Update</button>
+        </div>
+    </div>
+</div>
+
+<%- include('../partials/auth-check') %>
+
+</body>
+</html>

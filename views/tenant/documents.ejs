@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RentEase — Documents</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+<div class="app-wrapper">
+    <%- include('../partials/sidebar-tenant') %>
+
+    <div class="main-content">
+        <div class="topbar">
+            <div class="topbar-title">Documents</div>
+            <div class="topbar-user"><%= user.name %> — Tenant</div>
+        </div>
+
+        <div class="page-content">
+
+            <!-- Documents Table -->
+            <div class="card">
+                <div class="card-header">
+                    <h3>My Documents</h3>
+                    <span class="badge badge-green">3 Files</span>
+                </div>
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Document Name</th>
+                            <th>Type</th>
+                            <th>Uploaded On</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% documents.forEach(function(doc, index) { %>
+                        <tr>
+                            <td><%= index + 1 %></td>
+                            <td><%= doc.file_name %></td>
+                            <td>
+                                <span class="badge <%= doc.document_type === 'lease_agreement' ? 'badge-green' : doc.document_type === 'notice' ? 'badge-red' : 'badge-orange' %>">
+                                    <%= doc.document_type.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase()) %>
+                                </span>
+                            </td>
+                            <td><%= new Date(doc.uploaded_at).toLocaleDateString('en-IN') %></td>
+                            <td><a href="#" class="action-link edit">Download</a></td>
+                        </tr>
+                        <% }); %>
+                    </tbody>
+                </table>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<%- include('../partials/auth-check') %>
+
+</body>
+</html>

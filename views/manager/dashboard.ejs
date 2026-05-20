@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RentEase — Manager Dashboard</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+<div class="app-wrapper">
+    <%- include('../partials/sidebar-manager') %>
+
+    <div class="main-content">
+        <div class="topbar">
+            <div class="topbar-title">Dashboard</div>
+            <div class="topbar-user"><%= user.name %> — Property Manager</div>
+        </div>
+
+        <div class="page-content">
+
+            <!-- Stat Cards -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-label">My Properties</div>
+                    <div class="stat-value"><%= stats.total_properties %></div>
+                    <div class="stat-sub">Assigned to you</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Total Apartments</div>
+                    <div class="stat-value"><%= stats.total_apartments %></div>
+                    <div class="stat-sub">Across your properties</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Active Tenants</div>
+                    <div class="stat-value"><%= stats.occupied_apartments %></div>
+                    <div class="stat-sub">Currently occupied</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Rent Collected</div>
+                    <div class="stat-value" style="color:#27ae60;">₹<%= Number(stats.rent_collected || 0).toLocaleString('en-IN') %></div>
+                    <div class="stat-sub">This month</div>
+                </div>
+            </div>
+
+            <!-- Second row stats -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-label">Pending Payments</div>
+                    <div class="stat-value" style="color:#f39c12;">—</div>
+                    <div class="stat-sub">Tenants not yet paid</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Overdue Payments</div>
+                    <div class="stat-value" style="color:#e74c3c;">—</div>
+                    <div class="stat-sub">Past due date</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Open Maintenance</div>
+                    <div class="stat-value" style="color:#e74c3c;"><%= stats.open_maintenance %></div>
+                    <div class="stat-sub">Requests pending</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Vacant Apartments</div>
+                    <div class="stat-value" style="color:#7f8c8d;"><%= stats.vacant_apartments %></div>
+                    <div class="stat-sub">Available for rent</div>
+                </div>
+            </div>
+
+            <!-- Rent Status Table -->
+            <div class="card">
+                <div class="card-header">
+                    <h3>Rent Status — May 2026</h3>
+                    <a href="/manager/rent" class="btn-small">View All</a>
+                </div>
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Tenant</th>
+                            <th>Apartment</th>
+                            <th>Rent Amount</th>
+                            <th>Due Date</th>
+                            <th>Status</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% rentStatus.forEach(function(row) { %>
+                        <tr>
+                            <td><%= row.name %></td>
+                            <td><%= row.property_name %> — <%= row.apt_number %></td>
+                            <td>₹<%= Number(row.rent_amount).toLocaleString('en-IN') %></td>
+                            <td>1st of every month</td>
+                            <td>
+                                <span class="badge <%= row.status === 'Paid' ? 'badge-green' : row.status === 'Overdue' ? 'badge-red' : 'badge-orange' %>">
+                                    <%= row.status %>
+                                </span>
+                            </td>
+                            <td>
+                                <% if (row.status === 'Paid') { %>
+                                    <a href="#" class="action-link edit">Receipt</a>
+                                <% } else { %>
+                                    <a href="#" class="action-link edit">Record Payment</a>
+                                <% } %>
+                            </td>
+                        </tr>
+                        <% }); %>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Recent Maintenance Requests -->
+            <div class="card">
+                <div class="card-header">
+                    <h3>Recent Maintenance Requests</h3>
+                    <a href="/manager/maintenance" class="btn-small">View All</a>
+                </div>
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Tenant</th>
+                            <th>Issue</th>
+                            <th>Priority</th>
+                            <th>Status</th>
+                            <th>Date</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Anil Verma</td>
+                            <td>Water leakage in bathroom</td>
+                            <td><span class="badge badge-red">High</span></td>
+                            <td><span class="badge badge-orange">In Progress</span></td>
+                            <td>May 15, 2026</td>
+                            <td><a href="#" class="action-link edit">Update</a></td>
+                        </tr>
+                        <tr>
+                            <td>Sneha Patil</td>
+                            <td>Broken window latch</td>
+                            <td><span class="badge badge-orange">Medium</span></td>
+                            <td><span class="badge badge-red">Open</span></td>
+                            <td>May 17, 2026</td>
+                            <td><a href="#" class="action-link edit">Update</a></td>
+                        </tr>
+                        <tr>
+                            <td>Ravi Kulkarni</td>
+                            <td>Electricity fluctuation</td>
+                            <td><span class="badge badge-red">High</span></td>
+                            <td><span class="badge badge-red">Open</span></td>
+                            <td>May 18, 2026</td>
+                            <td><a href="#" class="action-link edit">Update</a></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<%- include('../partials/auth-check') %>
+
+</body>
+</html>

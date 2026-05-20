@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RentEase — Users</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+<div class="app-wrapper">
+    <%- include('../partials/sidebar-admin') %>
+
+    <div class="main-content">
+        <div class="topbar">
+            <div class="topbar-title">Users</div>
+            <div class="topbar-user"><%= user.name %></div>
+        </div>
+
+        <div class="page-content">
+
+            <div class="page-actions">
+                <button class="btn-primary-custom btn-inline" onclick="document.getElementById('addUserModal').style.display='flex'">
+                    + Add User
+                </button>
+            </div>
+
+            <!-- Property Managers -->
+            <div class="card">
+                <div class="card-header">
+                    <h3>Property Managers</h3>
+                    <span class="badge badge-green">4 Active</span>
+                </div>
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Name</th>
+                            <th>Email</th>
+                            <th>Phone</th>
+                            <th>Assigned Property</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% managers.forEach(function(manager, index) { %>
+                        <tr>
+                            <td><%= index + 1 %></td>
+                            <td><%= manager.name %></td>
+                            <td><%= manager.email %></td>
+                            <td><%= manager.phone || '—' %></td>
+                            <td><%= manager.property_name || 'Unassigned' %></td>
+                            <td>
+                                <span class="badge <%= manager.is_active ? 'badge-green' : 'badge-orange' %>">
+                                    <%= manager.is_active ? 'Active' : 'Inactive' %>
+                                </span>
+                            </td>
+                            <td>
+                                <a href="#" class="action-link edit">Edit</a>
+                                <a href="#" class="action-link delete">Deactivate</a>
+                            </td>
+                        </tr>
+                        <% }); %>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Tenants -->
+            <div class="card">
+                <div class="card-header">
+                    <h3>Tenants</h3>
+                    <span class="badge badge-green">71 Active</span>
+                </div>
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Name</th>
+                            <th>Email</th>
+                            <th>Phone</th>
+                            <th>Apartment</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% tenants.forEach(function(tenant, index) { %>
+                        <tr>
+                            <td><%= index + 1 %></td>
+                            <td><%= tenant.name %></td>
+                            <td><%= tenant.email %></td>
+                            <td><%= tenant.phone || '—' %></td>
+                            <td><%= tenant.property_name %> — <%= tenant.apt_number %></td>
+                            <td>
+                                <span class="badge <%= tenant.is_active ? 'badge-green' : 'badge-orange' %>">
+                                    <%= tenant.is_active ? 'Active' : 'Inactive' %>
+                                </span>
+                            </td>
+                            <td>
+                                <a href="#" class="action-link edit">Edit</a>
+                                <a href="#" class="action-link delete">Deactivate</a>
+                            </td>
+                        </tr>
+                        <% }); %>
+                    </tbody>
+                </table>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<!-- Add User Modal -->
+<div class="modal-overlay" id="addUserModal">
+    <div class="modal">
+        <div class="modal-header">
+            <h3>Add New User</h3>
+            <button class="modal-close" onclick="document.getElementById('addUserModal').style.display='none'">✕</button>
+        </div>
+        <div class="modal-body">
+            <div class="form-group">
+                <label class="form-label">Role</label>
+                <select class="form-control" id="roleSelect" onchange="togglePropertyField()">
+                    <option value="">Select Role</option>
+                    <option value="manager">Property Manager</option>
+                    <option value="tenant">Tenant</option>
+                </select>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label">Full Name</label>
+                    <input type="text" class="form-control" placeholder="Enter full name">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Phone</label>
+                    <input type="text" class="form-control" placeholder="10-digit number">
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Email Address</label>
+                <input type="email" class="form-control" placeholder="Enter email">
+            </div>
+            <div class="form-group" id="propertyField">
+                <label class="form-label">Assign Property</label>
+                <select class="form-control" name="property_id">
+                    <option value="">Select Property</option>
+                    <% properties.forEach(function(property) { %>
+                    <option value="<%= property.property_id %>"><%= property.name %></option>
+                    <% }); %>
+                </select>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn-cancel" onclick="document.getElementById('addUserModal').style.display='none'">Cancel</button>
+            <button class="btn-primary-custom btn-inline">Create User</button>
+        </div>
+    </div>
+</div>
+
+<script>
+function togglePropertyField() {
+    const role = document.getElementById('roleSelect').value;
+    const field = document.getElementById('propertyField');
+    field.style.display = role === '' ? 'none' : 'block';
+}
+togglePropertyField();
+</script>
+
+<%- include('../partials/auth-check') %>
+
+</body>
+</html>
