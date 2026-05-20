@@ -87,24 +87,30 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <% requests.forEach(function(req, index) { %>
+                        <% requests.forEach(function(mreq, index) { %>
                         <tr>
                             <td><%= index + 1 %></td>
-                            <td><%= req.tenant_name %></td>
-                            <td><%= req.property_name %> — <%= req.apt_number %></td>
-                            <td><%= req.title %></td>
+                            <td><%= mreq.tenant_name %></td>
+                            <td><%= mreq.property_name %> — <%= mreq.apt_number %></td>
+                            <td><%= mreq.title %></td>
                             <td>
-                                <span class="badge <%= req.priority === 'high' ? 'badge-red' : req.priority === 'medium' ? 'badge-orange' : 'badge-green' %>">
-                                    <%= req.priority.charAt(0).toUpperCase() + req.priority.slice(1) %>
+                                <span class="badge <%= mreq.priority === 'high' ? 'badge-red' : mreq.priority === 'medium' ? 'badge-orange' : 'badge-green' %>">
+                                    <%= mreq.priority.charAt(0).toUpperCase() + mreq.priority.slice(1) %>
                                 </span>
                             </td>
                             <td>
-                                <span class="badge <%= req.status === 'resolved' ? 'badge-green' : req.status === 'in_progress' ? 'badge-orange' : 'badge-red' %>">
-                                    <%= req.status.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase()) %>
+                                <span class="badge <%= mreq.status === 'resolved' ? 'badge-green' : mreq.status === 'in_progress' ? 'badge-orange' : 'badge-red' %>">
+                                    <%= mreq.status.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase()) %>
                                 </span>
                             </td>
-                            <td><%= new Date(req.created_at).toLocaleDateString('en-IN') %></td>
-                            <td><a href="#" class="action-link edit" onclick="document.getElementById('updateModal').style.display='flex'">Update</a></td>
+                            <td><%= new Date(mreq.created_at).toLocaleDateString('en-IN') %></td>
+                            <td>
+                                <a href="#" class="action-link edit"
+                                    data-id="<%= mreq.request_id %>"
+                                    data-title="<%= mreq.title %>"
+                                    data-status="<%= mreq.status %>"
+                                    data-notes="<%= mreq.manager_notes || '' %>">Update</a>
+                            </td>
                         </tr>
                         <% }); %>
                     </tbody>
@@ -122,30 +128,47 @@
             <h3>Update Maintenance Request</h3>
             <button class="modal-close" onclick="document.getElementById('updateModal').style.display='none'">✕</button>
         </div>
-        <div class="modal-body">
-            <div class="form-group">
-                <label class="form-label">Issue</label>
-                <input type="text" class="form-control" value="Water leakage in bathroom" readonly>
+        <form action="/manager/maintenance/update" method="POST">
+            <input type="hidden" name="request_id" id="modal_request_id">
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label">Issue</label>
+                    <input type="text" class="form-control" id="modal_title" readonly>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Update Status</label>
+                    <select class="form-control" name="status" id="modal_status">
+                        <option value="open">Open</option>
+                        <option value="in_progress">In Progress</option>
+                        <option value="resolved">Resolved</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Manager Notes</label>
+                    <textarea class="form-control" name="manager_notes" id="modal_notes" rows="3" placeholder="Add notes about the resolution..."></textarea>
+                </div>
             </div>
-            <div class="form-group">
-                <label class="form-label">Update Status</label>
-                <select class="form-control">
-                    <option>Open</option>
-                    <option selected>In Progress</option>
-                    <option>Resolved</option>
-                </select>
+            <div class="modal-footer">
+                <button type="button" class="btn-cancel" onclick="document.getElementById('updateModal').style.display='none'">Cancel</button>
+                <button type="submit" class="btn-primary-custom btn-inline">Save Update</button>
             </div>
-            <div class="form-group">
-                <label class="form-label">Manager Notes</label>
-                <textarea class="form-control" rows="3" placeholder="Add notes about the resolution...">Plumber scheduled for May 20</textarea>
-            </div>
-        </div>
-        <div class="modal-footer">
-            <button class="btn-cancel" onclick="document.getElementById('updateModal').style.display='none'">Cancel</button>
-            <button class="btn-primary-custom btn-inline">Save Update</button>
-        </div>
+        </form>
     </div>
 </div>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('[data-id]').forEach(function(el) {
+        el.addEventListener('click', function(e) {
+            e.preventDefault();
+            document.getElementById('modal_request_id').value = this.dataset.id;
+            document.getElementById('modal_title').value = this.dataset.title;
+            document.getElementById('modal_status').value = this.dataset.status;
+            document.getElementById('modal_notes').value = this.dataset.notes;
+            document.getElementById('updateModal').style.display = 'flex';
+        });
+    });
+});
+</script>
 
 <%- include('../partials/auth-check') %>
 

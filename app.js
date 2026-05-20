@@ -820,6 +820,23 @@ app.get('/check-session', (req, res) => {
     }
 });
 
+app.post('/manager/maintenance/update', noCache, requireManager, (req, res) => {
+    const { request_id, status, manager_notes } = req.body;
+
+    const query = `
+        UPDATE maintenance_requests 
+        SET status = ?, manager_notes = ?, updated_at = NOW()
+        WHERE request_id = ?
+    `;
+
+    db.query(query, [status, manager_notes, request_id], (err) => {
+        if (err) {
+            console.log('Error updating maintenance request:', err);
+        }
+        res.redirect('/manager/maintenance');
+    });
+});
+
 // Start server
 app.listen(3000, () => {
     console.log('RentEase running on http://localhost:3000');
