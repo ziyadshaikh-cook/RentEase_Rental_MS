@@ -837,6 +837,25 @@ app.post('/manager/maintenance/update', noCache, requireManager, (req, res) => {
     });
 });
 
+app.post('/manager/rent/record', noCache, requireManager, (req, res) => {
+    const { tenant_id, amount, payment_date, payment_method, month, year } = req.body;
+
+    const today = new Date();
+    const receiptNumber = `RCP-${today.getFullYear()}${String(today.getMonth()+1).padStart(2,'0')}${String(today.getDate()).padStart(2,'0')}-${String(Math.floor(Math.random()*9000)+1000)}`;
+
+    const query = `
+        INSERT INTO payments (tenant_id, amount, payment_date, payment_method, receipt_number, month, year)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+    `;
+
+    db.query(query, [tenant_id, amount, payment_date, payment_method.toLowerCase().replace(' ', '_'), receiptNumber, month, year], (err) => {
+        if (err) {
+            console.log('Payment error:', err);
+        }
+        res.redirect('/manager/rent');
+    });
+});
+
 // Start server
 app.listen(3000, () => {
     console.log('RentEase running on http://localhost:3000');

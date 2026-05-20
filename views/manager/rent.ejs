@@ -108,55 +108,60 @@
             <h3>Record Rent Payment</h3>
             <button class="modal-close" onclick="document.getElementById('recordPaymentModal').style.display='none'">✕</button>
         </div>
-        <div class="modal-body">
-            <div class="form-group">
-                <label class="form-label">Select Tenant</label>
-                <select class="form-control" name="tenant_id">
-                    <option value="">Select Tenant</option>
-                    <% tenants.forEach(function(tenant) { %>
-                    <option value="<%= tenant.tenant_id %>">
-                        <%= tenant.name %> — <%= tenant.property_name %> <%= tenant.apt_number %>
-                    </option>
-                    <% }); %>
-                </select>
-            </div>
-            <div class="form-row">
+        <form action="/manager/rent/record" method="POST">
+            <div class="modal-body">
                 <div class="form-group">
-                    <label class="form-label">Payment Amount (₹)</label>
-                    <input type="number" class="form-control" placeholder="e.g. 12000">
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Payment Date</label>
-                    <input type="date" class="form-control">
-                </div>
-            </div>
-            <div class="form-group">
-                <label class="form-label">Payment Method</label>
-                <select class="form-control">
-                    <option>Cash</option>
-                    <option>Bank Transfer</option>
-                    <option>Cheque</option>
-                </select>
-            </div>
-            <div class="form-row">
-                <div class="form-group">
-                    <label class="form-label">Month</label>
-                    <select class="form-control">
-                        <option>May 2026</option>
-                        <option>April 2026</option>
-                        <option>March 2026</option>
+                    <label class="form-label">Select Tenant</label>
+                    <select class="form-control" name="tenant_id" required>
+                        <option value="">Select Tenant</option>
+                        <% tenants.forEach(function(tenant) { %>
+                        <option value="<%= tenant.tenant_id %>">
+                            <%= tenant.name %> — <%= tenant.property_name %> <%= tenant.apt_number %>
+                        </option>
+                        <% }); %>
                     </select>
                 </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Payment Amount (₹)</label>
+                        <input type="number" class="form-control" name="amount" placeholder="e.g. 12000" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Payment Date</label>
+                        <input type="date" class="form-control" name="payment_date" required>
+                    </div>
+                </div>
                 <div class="form-group">
-                    <label class="form-label">Notes (Optional)</label>
-                    <input type="text" class="form-control" placeholder="Any additional notes">
+                    <label class="form-label">Payment Method</label>
+                    <select class="form-control" name="payment_method" required>
+                        <option value="cash">Cash</option>
+                        <option value="bank_transfer">Bank Transfer</option>
+                        <option value="cheque">Cheque</option>
+                    </select>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Month</label>
+                        <select class="form-control" name="month" required>
+                            <option value="5">May 2026</option>
+                            <option value="4">April 2026</option>
+                            <option value="3">March 2026</option>
+                            <option value="2">February 2026</option>
+                            <option value="1">January 2026</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Year</label>
+                        <input type="hidden" name="year" value="2026">
+                        <input type="text" class="form-control" value="2026" readonly>
+                    </div>
                 </div>
             </div>
-        </div>
-        <div class="modal-footer">
-            <button class="btn-cancel" onclick="document.getElementById('recordPaymentModal').style.display='none'">Cancel</button>
-            <button class="btn-primary-custom btn-inline">Save Payment</button>
-        </div>
+            <div class="modal-footer">
+                <button type="button" class="btn-cancel" onclick="document.getElementById('recordPaymentModal').style.display='none'">Cancel</button>
+                <button type="submit" class="btn-primary-custom btn-inline">Save Payment</button>
+            </div>
+        </form>
     </div>
 </div>
 
