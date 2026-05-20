@@ -856,6 +856,22 @@ app.post('/manager/rent/record', noCache, requireManager, (req, res) => {
     });
 });
 
+app.post('/admin/properties/add', noCache, requireAdmin, (req, res) => {
+    const { name, address, city, state, pincode, total_floors, total_apartments, manager_id, property_type } = req.body;
+
+    const query = `
+        INSERT INTO properties (name, address, city, state, pincode, total_floors, total_apartments, manager_id, property_type)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `;
+
+    db.query(query, [name, address, city, state, pincode, total_floors, total_apartments, manager_id || null, property_type || 'residential'], (err) => {
+        if (err) {
+            console.log('Add property error:', err);
+        }
+        res.redirect('/admin/properties');
+    });
+});
+
 // Start server
 app.listen(3000, () => {
     console.log('RentEase running on http://localhost:3000');

@@ -74,39 +74,64 @@
             <h3>Add New Property</h3>
             <button class="modal-close" onclick="document.getElementById('addPropertyModal').style.display='none'">✕</button>
         </div>
-        <div class="modal-body">
-            <div class="form-group">
-                <label class="form-label">Property Name</label>
-                <input type="text" class="form-control" placeholder="e.g. Sunrise Apartments">
-            </div>
-            <div class="form-group">
-                <label class="form-label">Address</label>
-                <input type="text" class="form-control" placeholder="Full address">
-            </div>
-            <div class="form-row">
+        <form action="/admin/properties/add" method="POST">
+            <div class="modal-body">
                 <div class="form-group">
-                    <label class="form-label">Total Floors</label>
-                    <input type="number" class="form-control" placeholder="e.g. 4">
+                    <label class="form-label">Property Name</label>
+                    <input type="text" class="form-control" name="name" placeholder="e.g. Sunrise Apartments" required>
                 </div>
                 <div class="form-group">
-                    <label class="form-label">Total Apartments</label>
-                    <input type="number" class="form-control" placeholder="e.g. 12">
+                    <label class="form-label">Address</label>
+                    <input type="text" class="form-control" name="address" placeholder="Street address" required>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">City</label>
+                        <input type="text" class="form-control" name="city" placeholder="e.g. Panaji" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">State</label>
+                        <input type="text" class="form-control" name="state" placeholder="e.g. Goa" required>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Pincode</label>
+                        <input type="text" class="form-control" name="pincode" placeholder="e.g. 403001" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Property Type</label>
+                        <select class="form-control" name="property_type">
+                            <option value="residential">Residential</option>
+                            <option value="commercial">Commercial</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Total Floors</label>
+                        <input type="number" class="form-control" name="total_floors" placeholder="e.g. 4" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Total Apartments</label>
+                        <input type="number" class="form-control" name="total_apartments" placeholder="e.g. 12" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Assign Property Manager</label>
+                    <select class="form-control" name="manager_id">
+                        <option value="">Select Manager</option>
+                        <% managers.forEach(function(manager) { %>
+                        <option value="<%= manager.user_id %>"><%= manager.name %></option>
+                        <% }); %>
+                    </select>
                 </div>
             </div>
-            <div class="form-group">
-                <label class="form-label">Assign Property Manager</label>
-                <select class="form-control" name="manager_id">
-                    <option value="">Select Manager</option>
-                    <% managers.forEach(function(manager) { %>
-                    <option value="<%= manager.user_id %>"><%= manager.name %></option>
-                    <% }); %>
-                </select>
+            <div class="modal-footer">
+                <button type="button" class="btn-cancel" onclick="document.getElementById('addPropertyModal').style.display='none'">Cancel</button>
+                <button type="submit" class="btn-primary-custom btn-inline">Save Property</button>
             </div>
-        </div>
-        <div class="modal-footer">
-            <button class="btn-cancel" onclick="document.getElementById('addPropertyModal').style.display='none'">Cancel</button>
-            <button class="btn-primary-custom btn-inline">Save Property</button>
-        </div>
+        </form>
     </div>
 </div>
 
