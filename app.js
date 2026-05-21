@@ -929,6 +929,55 @@ app.post('/manager/apartments/add', noCache, requireManager, (req, res) => {
     });
 });
 
+app.post('/manager/tenants/add', noCache, requireManager, (req, res) => {
+    const { name, email, phone, id_proof, apartment_id, lease_start, lease_end, deposit_amount, password } = req.body;
+
+    // Check if email already exists
+    const checkQuery = 'SELECT * FROM users WHERE email = ?';
+    db.query(checkQuery, [email], (err, results) => {
+        if (results && results.length > 0) {
+            return res.redirect('/manager/tenants');
+        }
+
+        // Create user account first
+        const insertUserQuery = `
+            INSERT INTO users (name, email, password, role, phone, is_active)
+            VALUES (?, ?, ?, 'tenant', ?, 1)
+        `;
+
+        db.query(insertUserQuery, [name, email, password, phone], (err, userResult) => {
+            if (err) {
+                console.log('Add tenant user error:', err);
+                return res.redirect('/manager/tenants');
+            }
+
+            const newUserId = userResult.insertId;
+
+            // Create tenant record
+            const insertTenantQuery = `
+                INSERT INTO tenants (user_id, apartment_id, lease_start, lease_end, deposit_amount, id_proof)
+                VALUES (?, ?, ?, ?, ?, ?)
+            `;
+
+            db.query(insertTenantQuery, [newUserId, apartment_id, lease_start, lease_end, deposit_amount, id_proof], (err2) => {
+                if (err2) {
+                    console.log('Add tenant record error:', err2);
+                    return res.redirect('/manager/tenants');
+                }
+
+                // Update apartment status to occupied
+                const updateApartmentQuery = `UPDATE apartments SET status = 'occupied' WHERE apartment_id = ?`;
+                db.query(updateApartmentQuery, [apartment_id], (err3) => {
+                    if (err3) {
+                        console.log('Update apartment status error:', err3);
+                    }
+                    res.redirect('/manager/tenants');
+                });
+            });
+        });
+    });
+});
+
 // Start server
 app.listen(3000, () => {
     console.log('RentEase running on http://localhost:3000');
