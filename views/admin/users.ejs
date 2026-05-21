@@ -29,7 +29,7 @@
             <div class="card">
                 <div class="card-header">
                     <h3>Property Managers</h3>
-                    <span class="badge badge-green">4 Active</span>
+                    <span class="badge badge-green"><%= managers.length %> Active</span>
                 </div>
                 <table class="data-table">
                     <thead>
@@ -70,7 +70,7 @@
             <div class="card">
                 <div class="card-header">
                     <h3>Tenants</h3>
-                    <span class="badge badge-green">71 Active</span>
+                    <span class="badge badge-green"><%= tenants.length %> Active</span>
                 </div>
                 <table class="data-table">
                     <thead>
@@ -118,43 +118,45 @@
             <h3>Add New User</h3>
             <button class="modal-close" onclick="document.getElementById('addUserModal').style.display='none'">✕</button>
         </div>
-        <div class="modal-body">
-            <div class="form-group">
-                <label class="form-label">Role</label>
-                <select class="form-control" id="roleSelect" onchange="togglePropertyField()">
+        <form action="/admin/users/add" method="POST">
+            <div class="modal-body">
+                <select class="form-control" name="role" id="roleSelect" onchange="togglePropertyField()" required>
                     <option value="">Select Role</option>
-                    <option value="manager">Property Manager</option>
-                    <option value="tenant">Tenant</option>
+                    <option value="property_manager">Property Manager</option>
                 </select>
-            </div>
-            <div class="form-row">
-                <div class="form-group">
-                    <label class="form-label">Full Name</label>
-                    <input type="text" class="form-control" placeholder="Enter full name">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Full Name</label>
+                        <input type="text" class="form-control" name="name" placeholder="Enter full name" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Phone</label>
+                        <input type="text" class="form-control" name="phone" placeholder="10-digit number">
+                    </div>
                 </div>
                 <div class="form-group">
-                    <label class="form-label">Phone</label>
-                    <input type="text" class="form-control" placeholder="10-digit number">
+                    <label class="form-label">Email Address</label>
+                    <input type="email" class="form-control" name="email" placeholder="Enter email" required>
+                </div>
+                <div class="form-group" id="propertyField" style="display:none;">
+                    <label class="form-label">Assign Property</label>
+                    <select class="form-control" name="property_id">
+                        <option value="">Select Property</option>
+                        <% properties.forEach(function(property) { %>
+                        <option value="<%= property.property_id %>"><%= property.name %></option>
+                        <% }); %>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Set Password</label>
+                    <input type="password" class="form-control" name="password" placeholder="Set a password for this user" required>
                 </div>
             </div>
-            <div class="form-group">
-                <label class="form-label">Email Address</label>
-                <input type="email" class="form-control" placeholder="Enter email">
+            <div class="modal-footer">
+                <button type="button" class="btn-cancel" onclick="document.getElementById('addUserModal').style.display='none'">Cancel</button>
+                <button type="submit" class="btn-primary-custom btn-inline">Create User</button>
             </div>
-            <div class="form-group" id="propertyField">
-                <label class="form-label">Assign Property</label>
-                <select class="form-control" name="property_id">
-                    <option value="">Select Property</option>
-                    <% properties.forEach(function(property) { %>
-                    <option value="<%= property.property_id %>"><%= property.name %></option>
-                    <% }); %>
-                </select>
-            </div>
-        </div>
-        <div class="modal-footer">
-            <button class="btn-cancel" onclick="document.getElementById('addUserModal').style.display='none'">Cancel</button>
-            <button class="btn-primary-custom btn-inline">Create User</button>
-        </div>
+        </form>
     </div>
 </div>
 
@@ -162,9 +164,8 @@
 function togglePropertyField() {
     const role = document.getElementById('roleSelect').value;
     const field = document.getElementById('propertyField');
-    field.style.display = role === '' ? 'none' : 'block';
+    field.style.display = role === 'property_manager' ? 'block' : 'none';
 }
-togglePropertyField();
 </script>
 
 <%- include('../partials/auth-check') %>

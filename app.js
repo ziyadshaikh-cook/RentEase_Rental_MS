@@ -872,6 +872,40 @@ app.post('/admin/properties/add', noCache, requireAdmin, (req, res) => {
     });
 });
 
+app.post('/admin/users/add', noCache, requireAdmin, (req, res) => {
+    const { name, email, phone, role, property_id, password } = req.body;
+
+    const checkQuery = 'SELECT * FROM users WHERE email = ?';
+    db.query(checkQuery, [email], (err, results) => {
+        if (results && results.length > 0) {
+            return res.redirect('/admin/users');
+        }
+
+        const insertQuery = `
+            INSERT INTO users (name, email, password, role, phone, is_active)
+            VALUES (?, ?, ?, ?, ?, 1)
+        `;
+
+        db.query(insertQuery, [name, email, password, role, phone], (err, result) => {
+            if (err) {
+                console.log('Add user error:', err);
+                return res.redirect('/admin/users');
+            }
+
+            const newUserId = result.insertId;
+
+            if (role === 'property_manager' && property_id) {
+                const updateProperty = `UPDATE properties SET manager_id = ? WHERE property_id = ?`;
+                db.query(updateProperty, [newUserId, property_id], (err2) => {
+                    res.redirect('/admin/users');
+                });
+            } else {
+                res.redirect('/admin/users');
+            }
+        });
+    });
+});
+
 // Start server
 app.listen(3000, () => {
     console.log('RentEase running on http://localhost:3000');
