@@ -990,6 +990,32 @@ app.post('/admin/users/deactivate', noCache, requireAdmin, (req, res) => {
     });
 });
 
+app.post('/tenant/maintenance/add', noCache, requireTenant, (req, res) => {
+    const { title, description, priority } = req.body;
+    const userId = req.session.user.id;
+
+    const tenantQuery = `SELECT tenant_id FROM tenants WHERE user_id = ?`;
+    db.query(tenantQuery, [userId], (err, results) => {
+        if (err || results.length === 0) {
+            return res.redirect('/tenant/maintenance');
+        }
+
+        const tenantId = results[0].tenant_id;
+
+        const insertQuery = `
+            INSERT INTO maintenance_requests (tenant_id, title, description, priority, status)
+            VALUES (?, ?, ?, ?, 'open')
+        `;
+
+        db.query(insertQuery, [tenantId, title, description, priority], (err2) => {
+            if (err2) {
+                console.log('Maintenance request error:', err2);
+            }
+            res.redirect('/tenant/maintenance');
+        });
+    });
+});
+
 // Start server
 app.listen(3000, () => {
     console.log('RentEase running on http://localhost:3000');

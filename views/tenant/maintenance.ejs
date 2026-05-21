@@ -48,7 +48,7 @@
             <div class="card">
                 <div class="card-header">
                     <h3>My Maintenance Requests</h3>
-                    <span class="badge badge-green">5 Total</span>
+                    <span class="badge badge-green"><%= requests.length %> Total</span>
                 </div>
                 <table class="data-table">
                     <thead>
@@ -97,28 +97,30 @@
             <h3>Submit Maintenance Request</h3>
             <button class="modal-close" onclick="document.getElementById('newRequestModal').style.display='none'">✕</button>
         </div>
-        <div class="modal-body">
-            <div class="form-group">
-                <label class="form-label">Issue Title</label>
-                <input type="text" class="form-control" placeholder="Short description of the issue">
+        <form action="/tenant/maintenance/add" method="POST">
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label">Issue Title</label>
+                    <input type="text" class="form-control" name="title" placeholder="Short description of the issue" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Description</label>
+                    <textarea class="form-control" name="description" rows="3" placeholder="Describe the issue in detail..." required></textarea>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Priority</label>
+                    <select class="form-control" name="priority" required>
+                        <option value="low">Low</option>
+                        <option value="medium" selected>Medium</option>
+                        <option value="high">High</option>
+                    </select>
+                </div>
             </div>
-            <div class="form-group">
-                <label class="form-label">Description</label>
-                <textarea class="form-control" rows="3" placeholder="Describe the issue in detail..."></textarea>
+            <div class="modal-footer">
+                <button type="button" class="btn-cancel" onclick="document.getElementById('newRequestModal').style.display='none'">Cancel</button>
+                <button type="submit" class="btn-primary-custom btn-inline">Submit Request</button>
             </div>
-            <div class="form-group">
-                <label class="form-label">Priority</label>
-                <select class="form-control">
-                    <option>Low</option>
-                    <option selected>Medium</option>
-                    <option>High</option>
-                </select>
-            </div>
-        </div>
-        <div class="modal-footer">
-            <button class="btn-cancel" onclick="document.getElementById('newRequestModal').style.display='none'">Cancel</button>
-            <button class="btn-primary-custom btn-inline">Submit Request</button>
-        </div>
+        </form>
     </div>
 </div>
 
