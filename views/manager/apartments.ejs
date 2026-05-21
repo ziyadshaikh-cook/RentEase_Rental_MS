@@ -57,7 +57,7 @@
             <div class="card">
                 <div class="card-header">
                     <h3>All Apartments</h3>
-                    <span class="badge badge-green">20 Total</span>
+                    <span class="badge badge-green"><%= apartments.length %></span>
                 </div>
                 <table class="data-table">
                     <thead>
@@ -109,44 +109,46 @@
             <h3>Add New Apartment</h3>
             <button class="modal-close" onclick="document.getElementById('addApartmentModal').style.display='none'">✕</button>
         </div>
-        <div class="modal-body">
-            <div class="form-group">
-                <label class="form-label">Property</label>
-                <select class="form-control" name="property_id">
-                    <% properties.forEach(function(property) { %>
-                    <option value="<%= property.property_id %>"><%= property.name %></option>
-                    <% }); %>
-                </select>
-            </div>
-            <div class="form-row">
+        <form action="/manager/apartments/add" method="POST">
+            <div class="modal-body">
                 <div class="form-group">
-                    <label class="form-label">Apartment Number</label>
-                    <input type="text" class="form-control" placeholder="e.g. A-301">
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Floor</label>
-                    <input type="number" class="form-control" placeholder="e.g. 3">
-                </div>
-            </div>
-            <div class="form-row">
-                <div class="form-group">
-                    <label class="form-label">Bedrooms</label>
-                    <select class="form-control">
-                        <option>1 BHK</option>
-                        <option>2 BHK</option>
-                        <option>3 BHK</option>
+                    <label class="form-label">Property</label>
+                    <select class="form-control" name="property_id" required>
+                        <% properties.forEach(function(property) { %>
+                        <option value="<%= property.property_id %>"><%= property.name %></option>
+                        <% }); %>
                     </select>
                 </div>
-                <div class="form-group">
-                    <label class="form-label">Rent Amount (₹)</label>
-                    <input type="number" class="form-control" placeholder="e.g. 12000">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Apartment Number</label>
+                        <input type="text" class="form-control" name="apt_number" placeholder="e.g. A-301" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Floor</label>
+                        <input type="number" class="form-control" name="floor" placeholder="e.g. 3" required>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Bedrooms</label>
+                        <select class="form-control" name="bedrooms" required>
+                            <option value="1">1 BHK</option>
+                            <option value="2">2 BHK</option>
+                            <option value="3">3 BHK</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Rent Amount (₹)</label>
+                        <input type="number" class="form-control" name="rent_amount" placeholder="e.g. 12000" required>
+                    </div>
                 </div>
             </div>
-        </div>
-        <div class="modal-footer">
-            <button class="btn-cancel" onclick="document.getElementById('addApartmentModal').style.display='none'">Cancel</button>
-            <button class="btn-primary-custom btn-inline">Save Apartment</button>
-        </div>
+            <div class="modal-footer">
+                <button type="button" class="btn-cancel" onclick="document.getElementById('addApartmentModal').style.display='none'">Cancel</button>
+                <button type="submit" class="btn-primary-custom btn-inline">Save Apartment</button>
+            </div>
+        </form>
     </div>
 </div>
 

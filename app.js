@@ -906,6 +906,29 @@ app.post('/admin/users/add', noCache, requireAdmin, (req, res) => {
     });
 });
 
+app.post('/manager/apartments/add', noCache, requireManager, (req, res) => {
+    const { property_id, apt_number, floor, bedrooms, rent_amount } = req.body;
+
+    const checkQuery = `SELECT * FROM apartments WHERE property_id = ? AND apt_number = ?`;
+    db.query(checkQuery, [property_id, apt_number], (err, results) => {
+        if (results && results.length > 0) {
+            return res.redirect('/manager/apartments');
+        }
+
+        const insertQuery = `
+            INSERT INTO apartments (property_id, apt_number, floor, rent_amount, bedrooms, status)
+            VALUES (?, ?, ?, ?, ?, 'vacant')
+        `;
+
+        db.query(insertQuery, [property_id, apt_number, floor, rent_amount, bedrooms], (err) => {
+            if (err) {
+                console.log('Add apartment error:', err);
+            }
+            res.redirect('/manager/apartments');
+        });
+    });
+});
+
 // Start server
 app.listen(3000, () => {
     console.log('RentEase running on http://localhost:3000');
