@@ -89,8 +89,17 @@
                             </td>
                             <td><%= apt.tenant_name || '—' %></td>
                             <td>
-                                <a href="#" class="action-link edit">Edit</a>
-                                <a href="#" class="action-link delete">Delete</a>
+                                <a href="#" class="action-link edit edit-apt-btn"
+                                    data-id="<%= apt.apartment_id %>"
+                                    data-number="<%= apt.apt_number %>"
+                                    data-floor="<%= apt.floor %>"
+                                    data-bedrooms="<%= apt.bedrooms %>"
+                                    data-rent="<%= apt.rent_amount %>">Edit</a>
+                                <form action="/manager/apartments/delete" method="POST" style="display:inline;">
+                                    <input type="hidden" name="apartment_id" value="<%= apt.apartment_id %>">
+                                    <button type="submit" class="action-link delete" style="background:none; border:none; cursor:pointer; padding:0;"
+                                        onclick="return confirm('Delete this apartment?')">Delete</button>
+                                </form>
                             </td>
                         </tr>
                         <% }); %>
@@ -151,6 +160,65 @@
         </form>
     </div>
 </div>
+
+<!-- Edit Apartment Modal -->
+<div class="modal-overlay" id="editApartmentModal">
+    <div class="modal">
+        <div class="modal-header">
+            <h3>Edit Apartment</h3>
+            <button class="modal-close" onclick="document.getElementById('editApartmentModal').style.display='none'">✕</button>
+        </div>
+        <form action="/manager/apartments/edit" method="POST">
+            <input type="hidden" name="apartment_id" id="edit_apt_id">
+            <div class="modal-body">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Apartment Number</label>
+                        <input type="text" class="form-control" name="apt_number" id="edit_apt_number" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Floor</label>
+                        <input type="number" class="form-control" name="floor" id="edit_apt_floor" required>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Bedrooms</label>
+                        <select class="form-control" name="bedrooms" id="edit_apt_bedrooms">
+                            <option value="1">1 BHK</option>
+                            <option value="2">2 BHK</option>
+                            <option value="3">3 BHK</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Rent Amount (₹)</label>
+                        <input type="number" class="form-control" name="rent_amount" id="edit_apt_rent" required>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn-cancel" onclick="document.getElementById('editApartmentModal').style.display='none'">Cancel</button>
+                <button type="submit" class="btn-primary-custom btn-inline">Save Changes</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.edit-apt-btn').forEach(function(el) {
+        el.addEventListener('click', function(e) {
+            e.preventDefault();
+            document.getElementById('edit_apt_id').value = this.dataset.id;
+            document.getElementById('edit_apt_number').value = this.dataset.number;
+            document.getElementById('edit_apt_floor').value = this.dataset.floor;
+            document.getElementById('edit_apt_bedrooms').value = this.dataset.bedrooms;
+            document.getElementById('edit_apt_rent').value = this.dataset.rent;
+            document.getElementById('editApartmentModal').style.display = 'flex';
+        });
+    });
+});
+</script>
 
 <%- include('../partials/auth-check') %>
 

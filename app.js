@@ -1059,6 +1059,42 @@ app.post('/admin/properties/delete', noCache, requireAdmin, (req, res) => {
     });
 });
 
+app.post('/manager/apartments/edit', noCache, requireManager, (req, res) => {
+    const { apartment_id, apt_number, floor, bedrooms, rent_amount } = req.body;
+
+    const query = `
+        UPDATE apartments 
+        SET apt_number = ?, floor = ?, bedrooms = ?, rent_amount = ?
+        WHERE apartment_id = ?
+    `;
+
+    db.query(query, [apt_number, floor, bedrooms, rent_amount, apartment_id], (err) => {
+        if (err) {
+            console.log('Edit apartment error:', err);
+        }
+        res.redirect('/manager/apartments');
+    });
+});
+
+app.post('/manager/apartments/delete', noCache, requireManager, (req, res) => {
+    const { apartment_id } = req.body;
+
+    const checkQuery = `SELECT * FROM tenants WHERE apartment_id = ?`;
+    db.query(checkQuery, [apartment_id], (err, results) => {
+        if (results && results.length > 0) {
+            return res.redirect('/manager/apartments');
+        }
+
+        const deleteQuery = `DELETE FROM apartments WHERE apartment_id = ?`;
+        db.query(deleteQuery, [apartment_id], (err2) => {
+            if (err2) {
+                console.log('Delete apartment error:', err2);
+            }
+            res.redirect('/manager/apartments');
+        });
+    });
+});
+
 // Start server
 app.listen(3000, () => {
     console.log('RentEase running on http://localhost:3000');
