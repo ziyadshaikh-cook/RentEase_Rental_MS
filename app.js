@@ -3,6 +3,17 @@ const path = require('path');
 const mysql = require('mysql2');
 const session = require('express-session');
 
+require('dotenv').config();
+const nodemailer = require('nodemailer');
+
+const transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS
+    }
+});
+
 const app = express();
 
 // View engine setup
@@ -894,14 +905,45 @@ app.post('/admin/users/add', noCache, requireAdmin, (req, res) => {
 
             const newUserId = result.insertId;
 
-            if (role === 'property_manager' && property_id) {
-                const updateProperty = `UPDATE properties SET manager_id = ? WHERE property_id = ?`;
-                db.query(updateProperty, [newUserId, property_id], (err2) => {
+            // Send welcome email
+            const mailOptions = {
+                from: `"RentEase System" <${process.env.EMAIL_USER}>`,
+                to: email,
+                subject: 'Welcome to RentEase — Your Login Credentials',
+                html: `
+                    <div style="font-family: Arial, sans-serif; max-width: 500px; margin: 0 auto;">
+                        <h2 style="color: #2C3E50;">Welcome to RentEase</h2>
+                        <p>Hello <strong>${name}</strong>,</p>
+                        <p>Your account has been created. Here are your login credentials:</p>
+                        <div style="background: #f5f6fa; padding: 16px; border-radius: 8px; margin: 20px 0;">
+                            <p><strong>Email:</strong> ${email}</p>
+                            <p><strong>Password:</strong> ${password}</p>
+                            <p><strong>Role:</strong> ${role.replace('_', ' ').toUpperCase()}</p>
+                        </div>
+                        <p>Login at: <a href="http://localhost:3000">http://localhost:3000</a></p>
+                        <p style="color: #e74c3c;">Please keep your credentials safe.</p>
+                        <hr>
+                        <p style="color: #7f8c8d; font-size: 12px;">This is an automated email from RentEase.</p>
+                    </div>
+                `
+            };
+
+            transporter.sendMail(mailOptions, (emailErr, info) => {
+                if (emailErr) {
+                    console.log('Email error:', emailErr.message);
+                } else {
+                    console.log('Welcome email sent to:', email);
+                }
+
+                if (role === 'property_manager' && property_id) {
+                    const updateProperty = `UPDATE properties SET manager_id = ? WHERE property_id = ?`;
+                    db.query(updateProperty, [newUserId, property_id], (err2) => {
+                        res.redirect('/admin/users');
+                    });
+                } else {
                     res.redirect('/admin/users');
-                });
-            } else {
-                res.redirect('/admin/users');
-            }
+                }
+            });
         });
     });
 });
@@ -932,14 +974,12 @@ app.post('/manager/apartments/add', noCache, requireManager, (req, res) => {
 app.post('/manager/tenants/add', noCache, requireManager, (req, res) => {
     const { name, email, phone, id_proof, apartment_id, lease_start, lease_end, deposit_amount, password } = req.body;
 
-    // Check if email already exists
     const checkQuery = 'SELECT * FROM users WHERE email = ?';
     db.query(checkQuery, [email], (err, results) => {
         if (results && results.length > 0) {
             return res.redirect('/manager/tenants');
         }
 
-        // Create user account first
         const insertUserQuery = `
             INSERT INTO users (name, email, password, role, phone, is_active)
             VALUES (?, ?, ?, 'tenant', ?, 1)
@@ -953,7 +993,6 @@ app.post('/manager/tenants/add', noCache, requireManager, (req, res) => {
 
             const newUserId = userResult.insertId;
 
-            // Create tenant record
             const insertTenantQuery = `
                 INSERT INTO tenants (user_id, apartment_id, lease_start, lease_end, deposit_amount, id_proof)
                 VALUES (?, ?, ?, ?, ?, ?)
@@ -965,13 +1004,41 @@ app.post('/manager/tenants/add', noCache, requireManager, (req, res) => {
                     return res.redirect('/manager/tenants');
                 }
 
-                // Update apartment status to occupied
                 const updateApartmentQuery = `UPDATE apartments SET status = 'occupied' WHERE apartment_id = ?`;
                 db.query(updateApartmentQuery, [apartment_id], (err3) => {
-                    if (err3) {
-                        console.log('Update apartment status error:', err3);
-                    }
-                    res.redirect('/manager/tenants');
+                    if (err3) console.log('Update apartment error:', err3);
+
+                    // Send welcome email to tenant
+                    const mailOptions = {
+                        from: `"RentEase System" <${process.env.EMAIL_USER}>`,
+                        to: email,
+                        subject: 'Welcome to RentEase — Your Tenant Login Credentials',
+                        html: `
+                            <div style="font-family: Arial, sans-serif; max-width: 500px; margin: 0 auto;">
+                                <h2 style="color: #2C3E50;">Welcome to RentEase</h2>
+                                <p>Hello <strong>${name}</strong>,</p>
+                                <p>Your tenant account has been created. Here are your login credentials:</p>
+                                <div style="background: #f5f6fa; padding: 16px; border-radius: 8px; margin: 20px 0;">
+                                    <p><strong>Email:</strong> ${email}</p>
+                                    <p><strong>Password:</strong> ${password}</p>
+                                    <p><strong>Role:</strong> TENANT</p>
+                                </div>
+                                <p>Login at: <a href="http://localhost:3000">http://localhost:3000</a></p>
+                                <p style="color: #e74c3c;">Please keep your credentials safe.</p>
+                                <hr>
+                                <p style="color: #7f8c8d; font-size: 12px;">This is an automated email from RentEase.</p>
+                            </div>
+                        `
+                    };
+
+                    transporter.sendMail(mailOptions, (emailErr, info) => {
+                        if (emailErr) {
+                            console.log('Tenant email error:', emailErr.message);
+                        } else {
+                            console.log('Welcome email sent to tenant:', email);
+                        }
+                        res.redirect('/manager/tenants');
+                    });
                 });
             });
         });
@@ -1163,3 +1230,11 @@ app.listen(3000, () => {
     console.log('RentEase running on http://localhost:3000');
 });
 
+app.post('/admin/users/activate', noCache, requireAdmin, (req, res) => {
+    const { user_id } = req.body;
+    const query = `UPDATE users SET is_active = 1 WHERE user_id = ?`;
+    db.query(query, [user_id], (err) => {
+        if (err) console.log('Activate user error:', err);
+        res.redirect('/admin/users');
+    });
+});

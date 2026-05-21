@@ -53,7 +53,17 @@
                             <td><%= manager.property_name || 'Unassigned' %></td>
                             <td>
                                 <span class="badge <%= manager.is_active ? 'badge-green' : 'badge-orange' %>">
-                                    <%= manager.is_active ? 'Active' : 'Inactive' %>
+                                    <% if (manager.is_active) { %>
+                                        <form action="/admin/users/deactivate" method="POST" style="display:inline;">
+                                            <input type="hidden" name="user_id" value="<%= manager.user_id %>">
+                                            <button type="submit" class="action-link delete" style="background:none; border:none; cursor:pointer; padding:0;">Deactivate</button>
+                                        </form>
+                                    <% } else { %>
+                                        <form action="/admin/users/activate" method="POST" style="display:inline;">
+                                            <input type="hidden" name="user_id" value="<%= manager.user_id %>">
+                                            <button type="submit" class="action-link edit" style="background:none; border:none; cursor:pointer; padding:0;">Activate</button>
+                                        </form>
+                                    <% } %>
                                 </span>
                             </td>
                             <td>
@@ -100,7 +110,17 @@
                             <td><%= tenant.property_name %> — <%= tenant.apt_number %></td>
                             <td>
                                 <span class="badge <%= tenant.is_active ? 'badge-green' : 'badge-orange' %>">
-                                    <%= tenant.is_active ? 'Active' : 'Inactive' %>
+                                    <% if (tenant.is_active) { %>
+                                        <form action="/admin/users/deactivate" method="POST" style="display:inline;">
+                                            <input type="hidden" name="user_id" value="<%= tenant.user_id %>">
+                                            <button type="submit" class="action-link delete" style="background:none; border:none; cursor:pointer; padding:0;">Deactivate</button>
+                                        </form>
+                                    <% } else { %>
+                                        <form action="/admin/users/activate" method="POST" style="display:inline;">
+                                            <input type="hidden" name="user_id" value="<%= tenant.user_id %>">
+                                            <button type="submit" class="action-link edit" style="background:none; border:none; cursor:pointer; padding:0;">Activate</button>
+                                        </form>
+                                    <% } %>
                                 </span>
                             </td>
                             <td>
