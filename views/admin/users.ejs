@@ -57,7 +57,10 @@
                                 </span>
                             </td>
                             <td>
-                                <a href="#" class="action-link edit">Edit</a>
+                                <a href="#" class="action-link edit edit-user-btn"
+                                    data-id="<%= manager.user_id %>"
+                                    data-name="<%= manager.name %>"
+                                    data-phone="<%= manager.phone || '' %>">Edit</a>
                                 <form action="/admin/users/deactivate" method="POST" style="display:inline;">
                                     <input type="hidden" name="user_id" value="<%= manager.user_id %>">
                                     <button type="submit" class="action-link delete" style="background:none; border:none; cursor:pointer; padding:0;">Deactivate</button>
@@ -101,7 +104,10 @@
                                 </span>
                             </td>
                             <td>
-                                <a href="#" class="action-link edit">Edit</a>
+                                <a href="#" class="action-link edit edit-user-btn"
+                                    data-id="<%= tenant.user_id %>"
+                                    data-name="<%= tenant.name %>"
+                                    data-phone="<%= tenant.phone || '' %>">Edit</a>
                                 <form action="/admin/users/deactivate" method="POST" style="display:inline;">
                                     <input type="hidden" name="user_id" value="<%= tenant.user_id %>">
                                     <button type="submit" class="action-link delete" style="background:none; border:none; cursor:pointer; padding:0;">Deactivate</button>
@@ -172,6 +178,47 @@ function togglePropertyField() {
     const field = document.getElementById('propertyField');
     field.style.display = role === 'property_manager' ? 'block' : 'none';
 }
+</script>
+
+<!-- Edit User Modal -->
+<div class="modal-overlay" id="editUserModal">
+    <div class="modal">
+        <div class="modal-header">
+            <h3>Edit User</h3>
+            <button class="modal-close" onclick="document.getElementById('editUserModal').style.display='none'">✕</button>
+        </div>
+        <form action="/admin/users/edit" method="POST">
+            <input type="hidden" name="user_id" id="edit_user_id">
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label">Full Name</label>
+                    <input type="text" class="form-control" name="name" id="edit_user_name" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Phone</label>
+                    <input type="text" class="form-control" name="phone" id="edit_user_phone">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn-cancel" onclick="document.getElementById('editUserModal').style.display='none'">Cancel</button>
+                <button type="submit" class="btn-primary-custom btn-inline">Save Changes</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.edit-user-btn').forEach(function(el) {
+        el.addEventListener('click', function(e) {
+            e.preventDefault();
+            document.getElementById('edit_user_id').value = this.dataset.id;
+            document.getElementById('edit_user_name').value = this.dataset.name;
+            document.getElementById('edit_user_phone').value = this.dataset.phone;
+            document.getElementById('editUserModal').style.display = 'flex';
+        });
+    });
+});
 </script>
 
 <%- include('../partials/auth-check') %>

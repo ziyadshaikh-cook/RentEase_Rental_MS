@@ -1146,7 +1146,20 @@ app.post('/manager/tenants/remove', noCache, requireManager, (req, res) => {
     });
 });
 
+app.post('/admin/users/edit', noCache, requireAdmin, (req, res) => {
+    const { user_id, name, phone } = req.body;
+
+    const query = `UPDATE users SET name = ?, phone = ? WHERE user_id = ?`;
+    db.query(query, [name, phone, user_id], (err) => {
+        if (err) {
+            console.log('Edit user error:', err);
+        }
+        res.redirect('/admin/users');
+    });
+});
+
 // Start server
 app.listen(3000, () => {
     console.log('RentEase running on http://localhost:3000');
 });
+
