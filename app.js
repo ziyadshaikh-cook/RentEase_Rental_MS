@@ -978,6 +978,18 @@ app.post('/manager/tenants/add', noCache, requireManager, (req, res) => {
     });
 });
 
+app.post('/admin/users/deactivate', noCache, requireAdmin, (req, res) => {
+    const { user_id } = req.body;
+
+    const query = `UPDATE users SET is_active = 0 WHERE user_id = ?`;
+    db.query(query, [user_id], (err) => {
+        if (err) {
+            console.log('Deactivate user error:', err);
+        }
+        res.redirect('/admin/users');
+    });
+});
+
 // Start server
 app.listen(3000, () => {
     console.log('RentEase running on http://localhost:3000');

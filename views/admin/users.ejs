@@ -58,7 +58,10 @@
                             </td>
                             <td>
                                 <a href="#" class="action-link edit">Edit</a>
-                                <a href="#" class="action-link delete">Deactivate</a>
+                                <form action="/admin/users/deactivate" method="POST" style="display:inline;">
+                                    <input type="hidden" name="user_id" value="<%= manager.user_id %>">
+                                    <button type="submit" class="action-link delete" style="background:none; border:none; cursor:pointer; padding:0;">Deactivate</button>
+                                </form>
                             </td>
                         </tr>
                         <% }); %>
@@ -99,7 +102,10 @@
                             </td>
                             <td>
                                 <a href="#" class="action-link edit">Edit</a>
-                                <a href="#" class="action-link delete">Deactivate</a>
+                                <form action="/admin/users/deactivate" method="POST" style="display:inline;">
+                                    <input type="hidden" name="user_id" value="<%= tenant.user_id %>">
+                                    <button type="submit" class="action-link delete" style="background:none; border:none; cursor:pointer; padding:0;">Deactivate</button>
+                                </form>
                             </td>
                         </tr>
                         <% }); %>
