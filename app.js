@@ -1016,6 +1016,49 @@ app.post('/tenant/maintenance/add', noCache, requireTenant, (req, res) => {
     });
 });
 
+app.post('/admin/properties/edit', noCache, requireAdmin, (req, res) => {
+    const { property_id, name, address, city, state, pincode, total_floors, total_apartments, manager_id, property_type } = req.body;
+
+    const query = `
+        UPDATE properties 
+        SET name = ?, address = ?, city = ?, state = ?, pincode = ?, 
+            total_floors = ?, total_apartments = ?, manager_id = ?, property_type = ?
+        WHERE property_id = ?
+    `;
+
+    db.query(query, [name, address, city, state, pincode, total_floors, total_apartments, manager_id || null, property_type, property_id], (err) => {
+        if (err) {
+            console.log('Edit property error:', err);
+        }
+        res.redirect('/admin/properties');
+    });
+});
+
+app.post('/admin/properties/delete', noCache, requireAdmin, (req, res) => {
+    const { property_id } = req.body;
+
+    // Check if property has active tenants
+    const checkQuery = `
+        SELECT COUNT(*) AS count FROM tenants t
+        JOIN apartments a ON t.apartment_id = a.apartment_id
+        WHERE a.property_id = ?
+    `;
+
+    db.query(checkQuery, [property_id], (err, results) => {
+        if (results[0].count > 0) {
+            return res.redirect('/admin/properties');
+        }
+
+        const deleteQuery = `DELETE FROM properties WHERE property_id = ?`;
+        db.query(deleteQuery, [property_id], (err2) => {
+            if (err2) {
+                console.log('Delete property error:', err2);
+            }
+            res.redirect('/admin/properties');
+        });
+    });
+});
+
 // Start server
 app.listen(3000, () => {
     console.log('RentEase running on http://localhost:3000');
