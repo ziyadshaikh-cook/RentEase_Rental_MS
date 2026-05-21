@@ -1095,6 +1095,57 @@ app.post('/manager/apartments/delete', noCache, requireManager, (req, res) => {
     });
 });
 
+app.post('/manager/tenants/edit', noCache, requireManager, (req, res) => {
+    const { tenant_id, name, phone, lease_start, lease_end, deposit_amount, id_proof } = req.body;
+
+    const getTenantQuery = `SELECT user_id FROM tenants WHERE tenant_id = ?`;
+    db.query(getTenantQuery, [tenant_id], (err, results) => {
+        if (err || results.length === 0) return res.redirect('/manager/tenants');
+
+        const userId = results[0].user_id;
+
+        const updateUserQuery = `UPDATE users SET name = ?, phone = ? WHERE user_id = ?`;
+        db.query(updateUserQuery, [name, phone, userId], (err2) => {
+
+            const updateTenantQuery = `
+                UPDATE tenants 
+                SET lease_start = ?, lease_end = ?, deposit_amount = ?, id_proof = ?
+                WHERE tenant_id = ?
+            `;
+            db.query(updateTenantQuery, [lease_start, lease_end, deposit_amount, id_proof, tenant_id], (err3) => {
+                if (err3) {
+                    console.log('Edit tenant error:', err3);
+                }
+                res.redirect('/manager/tenants');
+            });
+        });
+    });
+});
+
+app.post('/manager/tenants/remove', noCache, requireManager, (req, res) => {
+    const { tenant_id } = req.body;
+
+    const getApartmentQuery = `SELECT apartment_id FROM tenants WHERE tenant_id = ?`;
+    db.query(getApartmentQuery, [tenant_id], (err, results) => {
+        if (err || results.length === 0) return res.redirect('/manager/tenants');
+
+        const apartmentId = results[0].apartment_id;
+
+        const deleteTenantQuery = `DELETE FROM tenants WHERE tenant_id = ?`;
+        db.query(deleteTenantQuery, [tenant_id], (err2) => {
+            if (err2) {
+                console.log('Remove tenant error:', err2);
+                return res.redirect('/manager/tenants');
+            }
+
+            const updateApartmentQuery = `UPDATE apartments SET status = 'vacant' WHERE apartment_id = ?`;
+            db.query(updateApartmentQuery, [apartmentId], (err3) => {
+                res.redirect('/manager/tenants');
+            });
+        });
+    });
+});
+
 // Start server
 app.listen(3000, () => {
     console.log('RentEase running on http://localhost:3000');

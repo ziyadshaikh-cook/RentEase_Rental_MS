@@ -57,8 +57,19 @@
                             <td><%= tenant.lease_end ? new Date(tenant.lease_end).toLocaleDateString('en-IN') : '—' %></td>
                             <td>₹<%= Number(tenant.deposit_amount).toLocaleString('en-IN') %></td>
                             <td>
-                                <a href="#" class="action-link edit">Edit</a>
-                                <a href="#" class="action-link delete">Remove</a>
+                                <a href="#" class="action-link edit edit-tenant-btn"
+                                    data-id="<%= tenant.tenant_id %>"
+                                    data-name="<%= tenant.name %>"
+                                    data-phone="<%= tenant.phone || '' %>"
+                                    data-lease-start="<%= tenant.lease_start ? new Date(tenant.lease_start).toISOString().split('T')[0] : '' %>"
+                                    data-lease-end="<%= tenant.lease_end ? new Date(tenant.lease_end).toISOString().split('T')[0] : '' %>"
+                                    data-deposit="<%= tenant.deposit_amount %>"
+                                    data-idproof="<%= tenant.id_proof %>">Edit</a>
+                                <form action="/manager/tenants/remove" method="POST" style="display:inline;">
+                                    <input type="hidden" name="tenant_id" value="<%= tenant.tenant_id %>">
+                                    <button type="submit" class="action-link delete" style="background:none; border:none; cursor:pointer; padding:0;"
+                                        onclick="return confirm('Remove this tenant? Apartment will be marked vacant.')">Remove</button>
+                                </form>
                             </td>
                         </tr>
                         <% }); %>
@@ -132,6 +143,71 @@
         </form>
     </div>
 </div>
+
+<!-- Edit Tenant Modal -->
+<div class="modal-overlay" id="editTenantModal">
+    <div class="modal">
+        <div class="modal-header">
+            <h3>Edit Tenant</h3>
+            <button class="modal-close" onclick="document.getElementById('editTenantModal').style.display='none'">✕</button>
+        </div>
+        <form action="/manager/tenants/edit" method="POST">
+            <input type="hidden" name="tenant_id" id="edit_tenant_id">
+            <div class="modal-body">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Full Name</label>
+                        <input type="text" class="form-control" name="name" id="edit_tenant_name" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Phone</label>
+                        <input type="text" class="form-control" name="phone" id="edit_tenant_phone">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">ID Proof Number</label>
+                    <input type="text" class="form-control" name="id_proof" id="edit_tenant_idproof">
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Lease Start Date</label>
+                        <input type="date" class="form-control" name="lease_start" id="edit_tenant_lease_start">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Lease End Date</label>
+                        <input type="date" class="form-control" name="lease_end" id="edit_tenant_lease_end">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Deposit Amount (₹)</label>
+                    <input type="number" class="form-control" name="deposit_amount" id="edit_tenant_deposit">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn-cancel" onclick="document.getElementById('editTenantModal').style.display='none'">Cancel</button>
+                <button type="submit" class="btn-primary-custom btn-inline">Save Changes</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.edit-tenant-btn').forEach(function(el) {
+        el.addEventListener('click', function(e) {
+            e.preventDefault();
+            document.getElementById('edit_tenant_id').value = this.dataset.id;
+            document.getElementById('edit_tenant_name').value = this.dataset.name;
+            document.getElementById('edit_tenant_phone').value = this.dataset.phone;
+            document.getElementById('edit_tenant_lease_start').value = this.dataset.leaseStart;
+            document.getElementById('edit_tenant_lease_end').value = this.dataset.leaseEnd;
+            document.getElementById('edit_tenant_deposit').value = this.dataset.deposit;
+            document.getElementById('edit_tenant_idproof').value = this.dataset.idproof;
+            document.getElementById('editTenantModal').style.display = 'flex';
+        });
+    });
+});
+</script>
 
 <%- include('../partials/auth-check') %>
 
