@@ -281,8 +281,13 @@ app.get('/admin/users', noCache, requireAdmin, (req, res) => {
 });
 
 app.get('/admin/reports', noCache, requireAdmin, (req, res) => {
-    const month = parseInt(req.query.month) || new Date().getMonth() + 1;
-    const year = parseInt(req.query.year) || new Date().getFullYear();
+    const today = new Date();
+    const firstDay = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-01`;
+    const lastDayDate = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+    const lastDay = `${lastDayDate.getFullYear()}-${String(lastDayDate.getMonth() + 1).padStart(2, '0')}-${String(lastDayDate.getDate()).padStart(2, '0')}`;
+
+    const fromDate = req.query.from_date || firstDay;
+    const toDate = req.query.to_date || lastDay;
 
     const summaryQuery = `
         SELECT 
@@ -291,39 +296,38 @@ app.get('/admin/reports', noCache, requireAdmin, (req, res) => {
             (SELECT COUNT(*) FROM apartments WHERE status = 'occupied') AS occupied_apartments,
             (SELECT COUNT(*) FROM tenants) AS total_tenants,
             (SELECT COALESCE(SUM(amount), 0) FROM payments 
-             WHERE MONTH(payment_date) = ? AND YEAR(payment_date) = ?) AS rent_collected
+             WHERE payment_date BETWEEN ? AND ?) AS rent_collected
     `;
 
     const propertyBreakdownQuery = `
-        SELECT p.name, 
+        SELECT p.name,
                COUNT(a.apartment_id) AS total_units,
                SUM(CASE WHEN a.status = 'occupied' THEN 1 ELSE 0 END) AS occupied,
-               COALESCE(SUM(a.rent_amount * (a.status = 'occupied')), 0) AS expected_rent,
+               COALESCE(SUM(CASE WHEN a.status = 'occupied' THEN a.rent_amount ELSE 0 END), 0) AS expected_rent,
                COALESCE((
-                   SELECT SUM(pay.amount) 
+                   SELECT SUM(pay.amount)
                    FROM payments pay
                    JOIN tenants t ON pay.tenant_id = t.tenant_id
                    JOIN apartments apt ON t.apartment_id = apt.apartment_id
                    WHERE apt.property_id = p.property_id
-                   AND MONTH(pay.payment_date) = ? 
-                   AND YEAR(pay.payment_date) = ?
+                   AND pay.payment_date BETWEEN ? AND ?
                ), 0) AS collected
         FROM properties p
         LEFT JOIN apartments a ON p.property_id = a.property_id
         GROUP BY p.property_id
     `;
 
-    db.query(summaryQuery, [month, year], (err, summaryRows) => {
+    db.query(summaryQuery, [fromDate, toDate], (err, summaryRows) => {
         const summary = err ? {} : summaryRows[0];
 
-        db.query(propertyBreakdownQuery, [month, year], (err2, breakdown) => {
+        db.query(propertyBreakdownQuery, [fromDate, toDate], (err2, breakdown) => {
             res.render('admin/reports', {
                 active: 'reports',
                 user: req.session.user,
                 summary: summary,
                 breakdown: err2 ? [] : breakdown,
-                month: month,
-                year: year
+                fromDate: fromDate,
+                toDate: toDate
             });
         });
     });
@@ -595,10 +599,16 @@ app.get('/manager/maintenance', noCache, requireManager, (req, res) => {
 
 app.get('/manager/reports', noCache, requireManager, (req, res) => {
     const managerId = req.session.user.id;
-    const month = parseInt(req.query.month) || new Date().getMonth() + 1;
-    const year = parseInt(req.query.year) || new Date().getFullYear();
 
-    const summaryQuery = `
+    const today = new Date();
+    const firstDay = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-01`;
+    const lastDayDate = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+    const lastDay = `${lastDayDate.getFullYear()}-${String(lastDayDate.getMonth() + 1).padStart(2, '0')}-${String(lastDayDate.getDate()).padStart(2, '0')}`;
+
+    const fromDate = req.query.from_date || firstDay;
+    const toDate = req.query.to_date || lastDay;
+
+const summaryQuery = `
         SELECT 
             COUNT(DISTINCT a.apartment_id) AS total_apartments,
             SUM(CASE WHEN a.status = 'occupied' THEN 1 ELSE 0 END) AS occupied,
@@ -611,8 +621,7 @@ app.get('/manager/reports', noCache, requireManager, (req, res) => {
                 JOIN apartments a2 ON t2.apartment_id = a2.apartment_id
                 JOIN properties p2 ON a2.property_id = p2.property_id
                 WHERE p2.manager_id = ?
-                AND MONTH(pay.payment_date) = ?
-                AND YEAR(pay.payment_date) = ?
+                AND pay.payment_date BETWEEN ? AND ?
             ), 0) AS total_collected
         FROM apartments a
         JOIN properties p ON a.property_id = p.property_id
@@ -630,8 +639,7 @@ app.get('/manager/reports', noCache, requireManager, (req, res) => {
                    JOIN tenants t ON pay.tenant_id = t.tenant_id
                    JOIN apartments a2 ON t.apartment_id = a2.apartment_id
                    WHERE a2.property_id = p.property_id
-                   AND MONTH(pay.payment_date) = ?
-                   AND YEAR(pay.payment_date) = ?
+                   AND pay.payment_date BETWEEN ? AND ?
                ), 0) AS collected
         FROM properties p
         LEFT JOIN apartments a ON p.property_id = a.property_id
@@ -651,25 +659,24 @@ app.get('/manager/reports', noCache, requireManager, (req, res) => {
         JOIN apartments a ON t.apartment_id = a.apartment_id
         JOIN properties p ON a.property_id = p.property_id
         LEFT JOIN payments pay ON pay.tenant_id = t.tenant_id
-            AND MONTH(pay.payment_date) = ?
-            AND YEAR(pay.payment_date) = ?
+            AND pay.payment_date BETWEEN ? AND ?
         WHERE p.manager_id = ?
         ORDER BY status, u.name
     `;
 
-    db.query(summaryQuery, [managerId, month, year, managerId], (err, summaryRows) => {
+    db.query(summaryQuery, [managerId, fromDate, toDate, managerId], (err, summaryRows) => {
         const summary = err ? {} : summaryRows[0];
 
-        db.query(breakdownQuery, [month, year, managerId], (err2, breakdown) => {
-            db.query(tenantPaymentsQuery, [month, year, managerId], (err3, tenantPayments) => {
+        db.query(breakdownQuery, [fromDate, toDate, managerId], (err2, breakdown) => {
+            db.query(tenantPaymentsQuery, [fromDate, toDate, managerId], (err3, tenantPayments) => {
                 res.render('manager/reports', {
                     active: 'reports',
                     user: req.session.user,
                     summary: summary,
                     breakdown: err2 ? [] : breakdown,
                     tenantPayments: err3 ? [] : tenantPayments,
-                    month: month,
-                    year: year
+                    fromDate: fromDate,
+                    toDate: toDate
                 });
             });
         });
@@ -1326,18 +1333,15 @@ app.get('/receipt/:payment_id', noCache, requireLogin, (req, res) => {
 
 // Monthly Report PDF
 app.get('/report/download', noCache, requireLogin, (req, res) => {
-    const month = parseInt(req.query.month) || new Date().getMonth() + 1;
-    const year = parseInt(req.query.year) || new Date().getFullYear();
+    const today = new Date();
+    const firstDay = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-01`;
+    const lastDayDate = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+    const lastDay = `${lastDayDate.getFullYear()}-${String(lastDayDate.getMonth() + 1).padStart(2, '0')}-${String(lastDayDate.getDate()).padStart(2, '0')}`;
+
+    const fromDate = req.query.from_date || firstDay;
+    const toDate = req.query.to_date || lastDay;
     const userId = req.session.user.id;
     const role = req.session.user.role;
-
-    let propertyFilter = '';
-    let queryParams = [month, year];
-
-    if (role === 'property_manager') {
-        propertyFilter = 'WHERE p.manager_id = ?';
-        queryParams.push(userId);
-    }
 
     const query = `
         SELECT p.name AS property_name,
@@ -1350,8 +1354,7 @@ app.get('/report/download', noCache, requireLogin, (req, res) => {
                    JOIN tenants t ON pay.tenant_id = t.tenant_id
                    JOIN apartments a2 ON t.apartment_id = a2.apartment_id
                    WHERE a2.property_id = p.property_id
-                   AND MONTH(pay.payment_date) = ?
-                   AND YEAR(pay.payment_date) = ?
+                   AND pay.payment_date BETWEEN ? AND ?
                ), 0) AS collected
         FROM properties p
         LEFT JOIN apartments a ON p.property_id = a.property_id
@@ -1359,7 +1362,7 @@ app.get('/report/download', noCache, requireLogin, (req, res) => {
         GROUP BY p.property_id
     `;
 
-    const params = role === 'property_manager' ? [month, year, userId] : [month, year];
+    const params = role === 'property_manager' ? [fromDate, toDate, userId] : [fromDate, toDate];
 
     db.query(query, params, (err, rows) => {
         if (err) return res.status(500).send('Error generating report');
@@ -1368,20 +1371,18 @@ app.get('/report/download', noCache, requireLogin, (req, res) => {
         const doc = new PDFDocument({ margin: 50 });
 
         res.setHeader('Content-Type', 'application/pdf');
-        res.setHeader('Content-Disposition', `attachment; filename="Report-${month}-${year}.pdf"`);
+        res.setHeader('Content-Disposition', `attachment; filename="Report-${fromDate}-to-${toDate}.pdf"`);
 
         doc.pipe(res);
 
-        // Header
         doc.fontSize(24).font('Helvetica-Bold').text('RentEase', 50, 50);
         doc.fontSize(12).font('Helvetica').fillColor('#666').text('Rental Management System', 50, 80);
 
         doc.moveTo(50, 110).lineTo(550, 110).stroke('#cccccc');
-        doc.fontSize(18).font('Helvetica-Bold').fillColor('#2C3E50').text(`Monthly Financial Report`, 50, 125);
-        doc.fontSize(12).font('Helvetica').fillColor('#666').text(`Month: ${month}/${year}`, 50, 150);
+        doc.fontSize(18).font('Helvetica-Bold').fillColor('#2C3E50').text('Financial Report', 50, 125);
+        doc.fontSize(12).font('Helvetica').fillColor('#666').text(`Period: ${fromDate} to ${toDate}`, 50, 150);
         doc.moveTo(50, 175).lineTo(550, 175).stroke('#cccccc');
 
-        // Table header
         let y = 195;
         doc.fontSize(10).font('Helvetica-Bold').fillColor('white');
         doc.rect(50, y, 500, 22).fill('#2C3E50');
@@ -1400,7 +1401,6 @@ app.get('/report/download', noCache, requireLogin, (req, res) => {
         rows.forEach((row, index) => {
             const bg = index % 2 === 0 ? '#f5f6fa' : '#ffffff';
             doc.rect(50, y, 500, 22).fill(bg);
-
             doc.fontSize(9).font('Helvetica').fillColor('#333');
             doc.text(row.property_name, 55, y + 6);
             doc.text(String(row.total_units), 200, y + 6);
@@ -1414,7 +1414,6 @@ app.get('/report/download', noCache, requireLogin, (req, res) => {
             y += 22;
         });
 
-        // Totals row
         doc.rect(50, y, 500, 24).fill('#2C3E50');
         doc.fontSize(10).font('Helvetica-Bold').fillColor('white');
         doc.text('TOTAL', 55, y + 7);

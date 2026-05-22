@@ -22,30 +22,21 @@
             <!-- Filter Bar -->
             <div class="card">
                 <div class="modal-body">
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label class="form-label">Select Month</label>
-                            <select class="form-control">
-                                <option>May 2026</option>
-                                <option>April 2026</option>
-                                <option>March 2026</option>
-                                <option>February 2026</option>
-                            </select>
+                    <form action="/admin/reports" method="GET">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">From Date</label>
+                                <input type="date" class="form-control" name="from_date" value="<%= fromDate %>">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">To Date</label>
+                                <input type="date" class="form-control" name="to_date" value="<%= toDate %>">
+                            </div>
+                            <div class="form-group" style="display:flex; align-items:flex-end;">
+                                <button type="submit" class="btn-primary-custom btn-inline">Generate Report</button>
+                            </div>
                         </div>
-                        <div class="form-group">
-                            <label class="form-label">Select Property</label>
-                            <select class="form-control">
-                                <option>All Properties</option>
-                                <option>Sunrise Apartments</option>
-                                <option>Green Valley</option>
-                                <option>Blue Heights</option>
-                                <option>Palm Grove</option>
-                            </select>
-                        </div>
-                        <div class="form-group" style="display:flex; align-items:flex-end;">
-                            <button class="btn-primary-custom btn-inline">Generate Report</button>
-                        </div>
-                    </div>
+                    </form>
                 </div>
             </div>
 
@@ -54,7 +45,7 @@
                 <div class="stat-card">
                     <div class="stat-label">Total Rent Expected</div>
                     <div class="stat-value">₹<%= Number(summary.expected_rent || 0).toLocaleString('en-IN') %></div>
-                    <div class="stat-sub"><%= month %>/<%= year %></div>
+                    <div class="stat-sub"><%= fromDate %> to <%= toDate %></div>
                 </div>
                 <div class="stat-card">
                     <div class="stat-label">Rent Collected</div>
@@ -95,8 +86,8 @@
             <!-- Property Breakdown Table -->
             <div class="card">
                 <div class="card-header">
-                    <h3>Property-wise Breakdown — May 2026</h3>
-                    <a href="/report/download?month=<%= month %>&year=<%= year %>" class="btn-primary-custom btn-inline">Download PDF</a>
+                    <h3>Property Breakdown — <%= fromDate %> to <%= toDate %></h3>
+                    <a href="/report/download?from_date=<%= fromDate %>&to_date=<%= toDate %>" class="btn-primary-custom btn-inline">Download PDF</a>
                 </div>
                 <table class="data-table">
                     <tbody>
