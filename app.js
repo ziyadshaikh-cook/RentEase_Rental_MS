@@ -1429,6 +1429,297 @@ app.get('/report/download', noCache, requireLogin, (req, res) => {
     });
 });
 
+app.get('/report/excel', noCache, requireLogin, (req, res) => {
+    const userId = req.session.user.id;
+    const role = req.session.user.role;
+
+    const paymentsQuery = `
+        SELECT 
+            pay.receipt_number,
+            u.name AS tenant_name,
+            u.email AS tenant_email,
+            p.name AS property_name,
+            a.apt_number,
+            p.city,
+            a.rent_amount,
+            pay.amount,
+            pay.payment_date,
+            pay.payment_method,
+            pay.month,
+            pay.year
+        FROM payments pay
+        JOIN tenants t ON pay.tenant_id = t.tenant_id
+        JOIN users u ON t.user_id = u.user_id
+        JOIN apartments a ON t.apartment_id = a.apartment_id
+        JOIN properties p ON a.property_id = p.property_id
+        ${role === 'property_manager' ? 'WHERE p.manager_id = ?' : ''}
+        ORDER BY pay.payment_date DESC
+    `;
+
+    const summaryQuery = `
+        SELECT 
+            pay.month,
+            pay.year,
+            p.name AS property_name,
+            COUNT(pay.payment_id) AS total_payments,
+            SUM(pay.amount) AS total_collected
+        FROM payments pay
+        JOIN tenants t ON pay.tenant_id = t.tenant_id
+        JOIN apartments a ON t.apartment_id = a.apartment_id
+        JOIN properties p ON a.property_id = p.property_id
+        ${role === 'property_manager' ? 'WHERE p.manager_id = ?' : ''}
+        GROUP BY pay.year, pay.month, p.property_id
+        ORDER BY pay.year DESC, pay.month DESC
+    `;
+
+    const maintenanceQuery = `
+        SELECT 
+            u.name AS tenant_name,
+            p.name AS property_name,
+            a.apt_number,
+            mr.title,
+            mr.description,
+            mr.priority,
+            mr.status,
+            mr.manager_notes,
+            mr.created_at,
+            mr.updated_at
+        FROM maintenance_requests mr
+        JOIN tenants t ON mr.tenant_id = t.tenant_id
+        JOIN users u ON t.user_id = u.user_id
+        JOIN apartments a ON t.apartment_id = a.apartment_id
+        JOIN properties p ON a.property_id = p.property_id
+        ${role === 'property_manager' ? 'WHERE p.manager_id = ?' : ''}
+        ORDER BY mr.created_at DESC
+    `;
+
+    const tenantsQuery = `
+        SELECT 
+            u.name AS tenant_name,
+            u.email,
+            u.phone,
+            p.name AS property_name,
+            a.apt_number,
+            a.rent_amount,
+            t.lease_start,
+            t.lease_end,
+            t.deposit_amount,
+            t.id_proof,
+            CASE WHEN u.is_active = 1 THEN 'Active' ELSE 'Inactive' END AS status
+        FROM tenants t
+        JOIN users u ON t.user_id = u.user_id
+        JOIN apartments a ON t.apartment_id = a.apartment_id
+        JOIN properties p ON a.property_id = p.property_id
+        ${role === 'property_manager' ? 'WHERE p.manager_id = ?' : ''}
+        ORDER BY p.name, u.name
+    `;
+
+    const params = role === 'property_manager' ? [userId] : [];
+
+    db.query(paymentsQuery, params, (err, payments) => {
+        db.query(summaryQuery, params, (err2, summary) => {
+            db.query(maintenanceQuery, params, (err3, maintenance) => {
+                db.query(tenantsQuery, params, (err4, tenants) => {
+
+                    const ExcelJS = require('exceljs');
+                    const workbook = new ExcelJS.Workbook();
+                    workbook.creator = 'RentEase';
+                    workbook.created = new Date();
+
+                    // ==================
+                    // SHEET 1 - Monthly Summary
+                    // ==================
+                    const summarySheet = workbook.addWorksheet('Monthly Summary');
+
+                    summarySheet.columns = [
+                        { header: 'Year', key: 'year', width: 10 },
+                        { header: 'Month', key: 'month', width: 10 },
+                        { header: 'Property', key: 'property_name', width: 25 },
+                        { header: 'Total Payments', key: 'total_payments', width: 18 },
+                        { header: 'Total Collected (Rs)', key: 'total_collected', width: 22 }
+                    ];
+
+                    // Header style
+                    summarySheet.getRow(1).eachCell((cell) => {
+                        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF2C3E50' } };
+                        cell.font = { bold: true, color: { argb: 'FFFFFFFF' }, size: 11 };
+                        cell.alignment = { vertical: 'middle', horizontal: 'center' };
+                        cell.border = { bottom: { style: 'thin', color: { argb: 'FF3498DB' } } };
+                    });
+                    summarySheet.getRow(1).height = 25;
+
+                    summary.forEach((row, index) => {
+                        const dataRow = summarySheet.addRow({
+                            year: row.year,
+                            month: row.month,
+                            property_name: row.property_name,
+                            total_payments: row.total_payments,
+                            total_collected: Number(row.total_collected)
+                        });
+                        if (index % 2 === 0) {
+                            dataRow.eachCell((cell) => {
+                                cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF5F6FA' } };
+                            });
+                        }
+                    });
+
+                    // ==================
+                    // SHEET 2 - All Payments
+                    // ==================
+                    const paymentsSheet = workbook.addWorksheet('All Payments');
+
+                    paymentsSheet.columns = [
+                        { header: 'Receipt Number', key: 'receipt_number', width: 25 },
+                        { header: 'Tenant Name', key: 'tenant_name', width: 20 },
+                        { header: 'Email', key: 'tenant_email', width: 25 },
+                        { header: 'Property', key: 'property_name', width: 22 },
+                        { header: 'Apartment', key: 'apt_number', width: 12 },
+                        { header: 'City', key: 'city', width: 15 },
+                        { header: 'Rent Amount (Rs)', key: 'rent_amount', width: 18 },
+                        { header: 'Amount Paid (Rs)', key: 'amount', width: 18 },
+                        { header: 'Payment Date', key: 'payment_date', width: 15 },
+                        { header: 'Payment Method', key: 'payment_method', width: 18 },
+                        { header: 'Month', key: 'month', width: 10 },
+                        { header: 'Year', key: 'year', width: 10 }
+                    ];
+
+                    paymentsSheet.getRow(1).eachCell((cell) => {
+                        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF2C3E50' } };
+                        cell.font = { bold: true, color: { argb: 'FFFFFFFF' }, size: 11 };
+                        cell.alignment = { vertical: 'middle', horizontal: 'center' };
+                        cell.border = { bottom: { style: 'thin', color: { argb: 'FF3498DB' } } };
+                    });
+                    paymentsSheet.getRow(1).height = 25;
+
+                    payments.forEach((row, index) => {
+                        const dataRow = paymentsSheet.addRow({
+                            receipt_number: row.receipt_number,
+                            tenant_name: row.tenant_name,
+                            tenant_email: row.tenant_email,
+                            property_name: row.property_name,
+                            apt_number: row.apt_number,
+                            city: row.city,
+                            rent_amount: Number(row.rent_amount),
+                            amount: Number(row.amount),
+                            payment_date: new Date(row.payment_date).toLocaleDateString('en-IN'),
+                            payment_method: row.payment_method.replace('_', ' ').toUpperCase(),
+                            month: row.month,
+                            year: row.year
+                        });
+                        if (index % 2 === 0) {
+                            dataRow.eachCell((cell) => {
+                                cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF5F6FA' } };
+                            });
+                        }
+                    });
+
+                    // ==================
+                    // SHEET 3 - Tenants
+                    // ==================
+                    const tenantsSheet = workbook.addWorksheet('Tenants');
+
+                    tenantsSheet.columns = [
+                        { header: 'Tenant Name', key: 'tenant_name', width: 20 },
+                        { header: 'Email', key: 'email', width: 25 },
+                        { header: 'Phone', key: 'phone', width: 15 },
+                        { header: 'Property', key: 'property_name', width: 22 },
+                        { header: 'Apartment', key: 'apt_number', width: 12 },
+                        { header: 'Rent Amount (Rs)', key: 'rent_amount', width: 18 },
+                        { header: 'Lease Start', key: 'lease_start', width: 15 },
+                        { header: 'Lease End', key: 'lease_end', width: 15 },
+                        { header: 'Deposit (Rs)', key: 'deposit_amount', width: 15 },
+                        { header: 'ID Proof', key: 'id_proof', width: 18 },
+                        { header: 'Status', key: 'status', width: 12 }
+                    ];
+
+                    tenantsSheet.getRow(1).eachCell((cell) => {
+                        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF2C3E50' } };
+                        cell.font = { bold: true, color: { argb: 'FFFFFFFF' }, size: 11 };
+                        cell.alignment = { vertical: 'middle', horizontal: 'center' };
+                        cell.border = { bottom: { style: 'thin', color: { argb: 'FF3498DB' } } };
+                    });
+                    tenantsSheet.getRow(1).height = 25;
+
+                    tenants.forEach((row, index) => {
+                        const dataRow = tenantsSheet.addRow({
+                            tenant_name: row.tenant_name,
+                            email: row.email,
+                            phone: row.phone || '—',
+                            property_name: row.property_name,
+                            apt_number: row.apt_number,
+                            rent_amount: Number(row.rent_amount),
+                            lease_start: row.lease_start ? new Date(row.lease_start).toLocaleDateString('en-IN') : '—',
+                            lease_end: row.lease_end ? new Date(row.lease_end).toLocaleDateString('en-IN') : '—',
+                            deposit_amount: Number(row.deposit_amount),
+                            id_proof: row.id_proof,
+                            status: row.status
+                        });
+                        if (index % 2 === 0) {
+                            dataRow.eachCell((cell) => {
+                                cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF5F6FA' } };
+                            });
+                        }
+                    });
+
+                    // ==================
+                    // SHEET 4 - Maintenance
+                    // ==================
+                    const maintenanceSheet = workbook.addWorksheet('Maintenance Requests');
+
+                    maintenanceSheet.columns = [
+                        { header: 'Tenant Name', key: 'tenant_name', width: 20 },
+                        { header: 'Property', key: 'property_name', width: 22 },
+                        { header: 'Apartment', key: 'apt_number', width: 12 },
+                        { header: 'Issue Title', key: 'title', width: 30 },
+                        { header: 'Description', key: 'description', width: 40 },
+                        { header: 'Priority', key: 'priority', width: 12 },
+                        { header: 'Status', key: 'status', width: 15 },
+                        { header: 'Manager Notes', key: 'manager_notes', width: 35 },
+                        { header: 'Submitted On', key: 'created_at', width: 18 },
+                        { header: 'Updated On', key: 'updated_at', width: 18 }
+                    ];
+
+                    maintenanceSheet.getRow(1).eachCell((cell) => {
+                        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF2C3E50' } };
+                        cell.font = { bold: true, color: { argb: 'FFFFFFFF' }, size: 11 };
+                        cell.alignment = { vertical: 'middle', horizontal: 'center' };
+                        cell.border = { bottom: { style: 'thin', color: { argb: 'FF3498DB' } } };
+                    });
+                    maintenanceSheet.getRow(1).height = 25;
+
+                    maintenance.forEach((row, index) => {
+                        const dataRow = maintenanceSheet.addRow({
+                            tenant_name: row.tenant_name,
+                            property_name: row.property_name,
+                            apt_number: row.apt_number,
+                            title: row.title,
+                            description: row.description,
+                            priority: row.priority.toUpperCase(),
+                            status: row.status.replace('_', ' ').toUpperCase(),
+                            manager_notes: row.manager_notes || '—',
+                            created_at: new Date(row.created_at).toLocaleDateString('en-IN'),
+                            updated_at: new Date(row.updated_at).toLocaleDateString('en-IN')
+                        });
+                        if (index % 2 === 0) {
+                            dataRow.eachCell((cell) => {
+                                cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF5F6FA' } };
+                            });
+                        }
+                    });
+
+                    // Send file
+                    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+                    res.setHeader('Content-Disposition', `attachment; filename="RentEase-Report-${new Date().toISOString().split('T')[0]}.xlsx"`);
+
+                    workbook.xlsx.write(res).then(() => {
+                        res.end();
+                    });
+                });
+            });
+        });
+    });
+});
+
 // Start server
 app.listen(3000, () => {
     console.log('RentEase running on http://localhost:3000');

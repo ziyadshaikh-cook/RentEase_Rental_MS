@@ -89,6 +89,13 @@
                     <h3>Property Breakdown — <%= fromDate %> to <%= toDate %></h3>
                     <a href="/report/download?from_date=<%= fromDate %>&to_date=<%= toDate %>" class="btn-primary-custom btn-inline">Download PDF</a>
                 </div>
+                <div class="card-header">
+                    <h3>Property-wise Breakdown — <%= fromDate %> to <%= toDate %></h3>
+                    <div style="display:flex; gap:10px;">
+                        <a href="/report/download?from_date=<%= fromDate %>&to_date=<%= toDate %>" class="btn-primary-custom btn-inline">Download PDF</a>
+                        <a href="/report/excel" class="btn-primary-custom btn-inline" style="background-color:#27ae60;">Download Excel</a>
+                    </div>
+                </div>
                 <table class="data-table">
                     <tbody>
                         <% breakdown.forEach(function(row) { %>
