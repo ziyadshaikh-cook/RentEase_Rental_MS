@@ -71,7 +71,7 @@
                             <td><%= new Date(pay.payment_date).toLocaleDateString('en-IN') %></td>
                             <td><%= pay.payment_method.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase()) %></td>
                             <td><span class="badge badge-green">Paid</span></td>
-                            <td><a href="#" class="action-link edit">Download</a></td>
+                            <td><a href="/receipt/<%= pay.payment_id %>" class="action-link edit">Download</a></td>
                         </tr>
                         <% }); %>
                     </tbody>

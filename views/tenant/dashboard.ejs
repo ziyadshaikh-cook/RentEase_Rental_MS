@@ -94,7 +94,7 @@
 
             <!-- Recent Payments -->
             <div class="card">
-                <div class="card-header">
+               <div class="card-header">
                     <h3>Recent Payments</h3>
                     <a href="/tenant/payments" class="btn-small">View All</a>
                 </div>
@@ -109,27 +109,15 @@
                         </tr>
                     </thead>
                     <tbody>
+                        <% recentPayments.forEach(function(pay) { %>
                         <tr>
-                            <td>May 2026</td>
-                            <td>₹12,000</td>
-                            <td>May 2, 2026</td>
-                            <td>Cash</td>
-                            <td><a href="#" class="action-link edit">Download</a></td>
+                            <td><%= pay.month %>/<%= pay.year %></td>
+                            <td>₹<%= Number(pay.amount).toLocaleString('en-IN') %></td>
+                            <td><%= new Date(pay.payment_date).toLocaleDateString('en-IN') %></td>
+                            <td><%= pay.payment_method.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase()) %></td>
+                            <td><a href="/receipt/<%= pay.payment_id %>" class="action-link edit">Download</a></td>
                         </tr>
-                        <tr>
-                            <td>April 2026</td>
-                            <td>₹12,000</td>
-                            <td>Apr 1, 2026</td>
-                            <td>Cash</td>
-                            <td><a href="#" class="action-link edit">Download</a></td>
-                        </tr>
-                        <tr>
-                            <td>March 2026</td>
-                            <td>₹12,000</td>
-                            <td>Mar 3, 2026</td>
-                            <td>Cash</td>
-                            <td><a href="#" class="action-link edit">Download</a></td>
-                        </tr>
+                        <% }); %>
                     </tbody>
                 </table>
             </div>

@@ -86,7 +86,7 @@
                             </td>
                             <td>
                                 <% if (row.status === 'Paid') { %>
-                                    <a href="#" class="action-link edit">Receipt</a>
+                                    <a href="/receipt/<%= row.payment_id %>" class="action-link edit">Receipt</a>
                                 <% } else { %>
                                     <a href="#" class="action-link edit">Record</a>
                                 <% } %>
