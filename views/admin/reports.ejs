@@ -44,7 +44,7 @@
             <div class="stats-grid">
                 <div class="stat-card">
                     <div class="stat-label">Total Rent Expected</div>
-                    <div class="stat-value">₹<%= Number(summary.expected_rent || 0).toLocaleString('en-IN') %></div>
+                    <div class="stat-value">₹<%= Number(summary.total_expected || 0).toLocaleString('en-IN') %></div>
                     <div class="stat-sub"><%= fromDate %> to <%= toDate %></div>
                 </div>
                 <div class="stat-card">
@@ -97,6 +97,18 @@
                     </div>
                 </div>
                 <table class="data-table">
+                    <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Property</th>
+                            <th>Total Units</th>
+                            <th>Occupied</th>
+                            <th>Expected Rent</th>
+                            <th>Collected</th>
+                            <th>Pending</th>
+                            <th>Overdue</th>
+                        </tr>
+                    </thead>
                     <tbody>
                         <% breakdown.forEach(function(row) { %>
                         <tr>

@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RentEase — Occupancy Report</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+<div class="app-wrapper">
+    <%- include('../partials/sidebar-admin') %>
+
+    <div class="main-content">
+        <div class="topbar">
+            <div class="topbar-title">Occupancy Report</div>
+            <div class="topbar-user"><%= user.name %></div>
+        </div>
+
+        <div class="page-content">
+
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-label">Total Apartments</div>
+                    <div class="stat-value"><%= stats.total %></div>
+                    <div class="stat-sub">Across all properties</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Occupied</div>
+                    <div class="stat-value" style="color:#27ae60;"><%= stats.occupied %></div>
+                    <div class="stat-sub">Currently rented</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Vacant</div>
+                    <div class="stat-value" style="color:#e74c3c;"><%= stats.vacant %></div>
+                    <div class="stat-sub">Available for rent</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Occupancy Rate</div>
+                    <div class="stat-value" style="color:#3498DB;"><%= stats.occupancy_rate %>%</div>
+                    <div class="stat-sub">Overall</div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h3>Apartment Occupancy Details</h3>
+                    <a href="/report/excel" class="btn-primary-custom btn-inline" style="background-color:#27ae60;">Download Excel</a>
+                </div>
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Property</th>
+                            <th>Apartment</th>
+                            <th>Floor</th>
+                            <th>Bedrooms</th>
+                            <th>Rent</th>
+                            <th>Status</th>
+                            <th>Tenant</th>
+                            <th>Lease Start</th>
+                            <th>Lease End</th>
+                            <th>Days Until Expiry</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% apartments.forEach(function(apt, index) { %>
+                        <tr>
+                            <td><%= index + 1 %></td>
+                            <td><%= apt.property_name %>, <%= apt.city %></td>
+                            <td><%= apt.apt_number %></td>
+                            <td><%= apt.floor %></td>
+                            <td><%= apt.bedrooms %> BHK</td>
+                            <td>₹<%= Number(apt.rent_amount).toLocaleString('en-IN') %></td>
+                            <td>
+                                <span class="badge <%= apt.status === 'occupied' ? 'badge-green' : 'badge-orange' %>">
+                                    <%= apt.status.charAt(0).toUpperCase() + apt.status.slice(1) %>
+                                </span>
+                            </td>
+                            <td><%= apt.tenant_name || '—' %></td>
+                            <td><%= apt.lease_start ? new Date(apt.lease_start).toLocaleDateString('en-IN') : '—' %></td>
+                            <td><%= apt.lease_end ? new Date(apt.lease_end).toLocaleDateString('en-IN') : '—' %></td>
+                            <td>
+                                <% if (apt.days_until_expiry !== null) { %>
+                                    <span class="badge <%= apt.days_until_expiry < 30 ? 'badge-red' : apt.days_until_expiry < 90 ? 'badge-orange' : 'badge-green' %>">
+                                        <%= apt.days_until_expiry < 0 ? 'Expired' : apt.days_until_expiry + ' days' %>
+                                    </span>
+                                <% } else { %>
+                                    —
+                                <% } %>
+                            </td>
+                        </tr>
+                        <% }); %>
+                    </tbody>
+                </table>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<%- include('../partials/auth-check') %>
+
+</body>
+</html>

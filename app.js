@@ -14,6 +14,7 @@ const transporter = nodemailer.createTransport({
     }
 });
 
+
 const app = express();
 
 // View engine setup
@@ -609,24 +610,29 @@ app.get('/manager/reports', noCache, requireManager, (req, res) => {
     const toDate = req.query.to_date || lastDay;
 
 const summaryQuery = `
-        SELECT 
-            COUNT(DISTINCT a.apartment_id) AS total_apartments,
-            SUM(CASE WHEN a.status = 'occupied' THEN 1 ELSE 0 END) AS occupied,
-            SUM(CASE WHEN a.status = 'vacant' THEN 1 ELSE 0 END) AS vacant,
-            COALESCE(SUM(CASE WHEN a.status = 'occupied' THEN a.rent_amount ELSE 0 END), 0) AS total_expected,
-            COALESCE((
-                SELECT SUM(pay.amount)
-                FROM payments pay
-                JOIN tenants t2 ON pay.tenant_id = t2.tenant_id
-                JOIN apartments a2 ON t2.apartment_id = a2.apartment_id
-                JOIN properties p2 ON a2.property_id = p2.property_id
-                WHERE p2.manager_id = ?
-                AND pay.payment_date BETWEEN ? AND ?
-            ), 0) AS total_collected
-        FROM apartments a
-        JOIN properties p ON a.property_id = p.property_id
-        WHERE p.manager_id = ?
-    `;
+    SELECT 
+        COUNT(DISTINCT a.apartment_id) AS total_apartments,
+        SUM(CASE WHEN a.status = 'occupied' THEN 1 ELSE 0 END) AS occupied,
+        SUM(CASE WHEN a.status = 'vacant' THEN 1 ELSE 0 END) AS vacant,
+        COALESCE((
+            SELECT SUM(pay.amount)
+            FROM payments pay
+            JOIN tenants t2 ON pay.tenant_id = t2.tenant_id
+            JOIN apartments a2 ON t2.apartment_id = a2.apartment_id
+            JOIN properties p2 ON a2.property_id = p2.property_id
+            WHERE p2.manager_id = ?
+            AND pay.payment_date BETWEEN ? AND ?
+        ), 0) AS total_collected,
+        COALESCE((
+            SELECT SUM(a3.rent_amount)
+            FROM apartments a3
+            JOIN properties p3 ON a3.property_id = p3.property_id
+            WHERE p3.manager_id = ? AND a3.status = 'occupied'
+        ), 0) AS total_expected
+    FROM apartments a
+    JOIN properties p ON a.property_id = p.property_id
+    WHERE p.manager_id = ?
+`;
 
     const breakdownQuery = `
         SELECT p.name,
@@ -664,7 +670,7 @@ const summaryQuery = `
         ORDER BY status, u.name
     `;
 
-    db.query(summaryQuery, [managerId, fromDate, toDate, managerId], (err, summaryRows) => {
+    db.query(summaryQuery, [managerId, fromDate, toDate, managerId, managerId], (err, summaryRows) => {
         const summary = err ? {} : summaryRows[0];
 
         db.query(breakdownQuery, [fromDate, toDate, managerId], (err2, breakdown) => {
@@ -1435,18 +1441,10 @@ app.get('/report/excel', noCache, requireLogin, (req, res) => {
 
     const paymentsQuery = `
         SELECT 
-            pay.receipt_number,
-            u.name AS tenant_name,
-            u.email AS tenant_email,
-            p.name AS property_name,
-            a.apt_number,
-            p.city,
-            a.rent_amount,
-            pay.amount,
-            pay.payment_date,
-            pay.payment_method,
-            pay.month,
-            pay.year
+            pay.receipt_number, u.name AS tenant_name, u.email AS tenant_email,
+            p.name AS property_name, a.apt_number, p.city,
+            a.rent_amount, pay.amount, pay.payment_date,
+            pay.payment_method, pay.month, pay.year
         FROM payments pay
         JOIN tenants t ON pay.tenant_id = t.tenant_id
         JOIN users u ON t.user_id = u.user_id
@@ -1458,8 +1456,7 @@ app.get('/report/excel', noCache, requireLogin, (req, res) => {
 
     const summaryQuery = `
         SELECT 
-            pay.month,
-            pay.year,
+            pay.month, pay.year,
             p.name AS property_name,
             COUNT(pay.payment_id) AS total_payments,
             SUM(pay.amount) AS total_collected
@@ -1474,16 +1471,9 @@ app.get('/report/excel', noCache, requireLogin, (req, res) => {
 
     const maintenanceQuery = `
         SELECT 
-            u.name AS tenant_name,
-            p.name AS property_name,
-            a.apt_number,
-            mr.title,
-            mr.description,
-            mr.priority,
-            mr.status,
-            mr.manager_notes,
-            mr.created_at,
-            mr.updated_at
+            u.name AS tenant_name, p.name AS property_name, a.apt_number,
+            mr.title, mr.description, mr.priority, mr.status,
+            mr.manager_notes, mr.created_at, mr.updated_at
         FROM maintenance_requests mr
         JOIN tenants t ON mr.tenant_id = t.tenant_id
         JOIN users u ON t.user_id = u.user_id
@@ -1495,16 +1485,9 @@ app.get('/report/excel', noCache, requireLogin, (req, res) => {
 
     const tenantsQuery = `
         SELECT 
-            u.name AS tenant_name,
-            u.email,
-            u.phone,
-            p.name AS property_name,
-            a.apt_number,
-            a.rent_amount,
-            t.lease_start,
-            t.lease_end,
-            t.deposit_amount,
-            t.id_proof,
+            u.name AS tenant_name, u.email, u.phone,
+            p.name AS property_name, a.apt_number, a.rent_amount,
+            t.lease_start, t.lease_end, t.deposit_amount, t.id_proof,
             CASE WHEN u.is_active = 1 THEN 'Active' ELSE 'Inactive' END AS status
         FROM tenants t
         JOIN users u ON t.user_id = u.user_id
@@ -1517,9 +1500,16 @@ app.get('/report/excel', noCache, requireLogin, (req, res) => {
     const params = role === 'property_manager' ? [userId] : [];
 
     db.query(paymentsQuery, params, (err, payments) => {
+        if (err) payments = [];
+        
         db.query(summaryQuery, params, (err2, summary) => {
+            if (err2) summary = [];
+            
             db.query(maintenanceQuery, params, (err3, maintenance) => {
+                if (err3) maintenance = [];
+                
                 db.query(tenantsQuery, params, (err4, tenants) => {
+                    if (err4) tenants = [];
 
                     const ExcelJS = require('exceljs');
                     const workbook = new ExcelJS.Workbook();
@@ -1718,6 +1708,103 @@ app.get('/report/excel', noCache, requireLogin, (req, res) => {
             });
         });
     });
+});
+
+app.get('/manager/occupancy', noCache, requireManager, (req, res) => {
+    const managerId = req.session.user.id;
+
+    const occupancyQuery = `
+        SELECT 
+            p.name AS property_name,
+            p.city,
+            a.apt_number,
+            a.floor,
+            a.bedrooms,
+            a.rent_amount,
+            a.status,
+            u.name AS tenant_name,
+            u.email AS tenant_email,
+            t.lease_start,
+            t.lease_end,
+            DATEDIFF(t.lease_end, CURDATE()) AS days_until_expiry
+        FROM apartments a
+        JOIN properties p ON a.property_id = p.property_id
+        LEFT JOIN tenants t ON t.apartment_id = a.apartment_id
+        LEFT JOIN users u ON t.user_id = u.user_id
+        WHERE p.manager_id = ?
+        ORDER BY p.name, a.apt_number
+    `;
+
+    const statsQuery = `
+        SELECT 
+            COUNT(*) AS total,
+            SUM(CASE WHEN a.status = 'occupied' THEN 1 ELSE 0 END) AS occupied,
+            SUM(CASE WHEN a.status = 'vacant' THEN 1 ELSE 0 END) AS vacant,
+            ROUND(SUM(CASE WHEN a.status = 'occupied' THEN 1 ELSE 0 END) / COUNT(*) * 100, 1) AS occupancy_rate
+        FROM apartments a
+        JOIN properties p ON a.property_id = p.property_id
+        WHERE p.manager_id = ?
+    `;
+
+    db.query(occupancyQuery, [managerId], (err, apartments) => {
+        db.query(statsQuery, [managerId, managerId], (err2, statsRows) => {
+            res.render('manager/occupancy', {
+                active: 'occupancy',
+                user: req.session.user,
+                apartments: err ? [] : apartments,
+                stats: err2 ? {} : statsRows[0]
+            });
+        });
+    });
+});
+
+app.get('/admin/occupancy', noCache, requireAdmin, (req, res) => {
+    const occupancyQuery = `
+        SELECT 
+            p.name AS property_name,
+            p.city,
+            p.state,
+            a.apt_number,
+            a.floor,
+            a.bedrooms,
+            a.rent_amount,
+            a.status,
+            u.name AS tenant_name,
+            u.email AS tenant_email,
+            t.lease_start,
+            t.lease_end,
+            DATEDIFF(t.lease_end, CURDATE()) AS days_until_expiry
+        FROM apartments a
+        JOIN properties p ON a.property_id = p.property_id
+        LEFT JOIN tenants t ON t.apartment_id = a.apartment_id
+        LEFT JOIN users u ON t.user_id = u.user_id
+        ORDER BY p.name, a.apt_number
+    `;
+
+    const statsQuery = `
+        SELECT 
+            COUNT(*) AS total,
+            SUM(CASE WHEN status = 'occupied' THEN 1 ELSE 0 END) AS occupied,
+            SUM(CASE WHEN status = 'vacant' THEN 1 ELSE 0 END) AS vacant,
+            ROUND(SUM(CASE WHEN status = 'occupied' THEN 1 ELSE 0 END) / COUNT(*) * 100, 1) AS occupancy_rate
+        FROM apartments
+    `;
+
+    db.query(occupancyQuery, (err, apartments) => {
+        db.query(statsQuery, (err2, statsRows) => {
+            res.render('admin/occupancy', {
+                active: 'occupancy',
+                user: req.session.user,
+                apartments: err ? [] : apartments,
+                stats: err2 ? {} : statsRows[0]
+            });
+        });
+    });
+});
+
+process.on('uncaughtException', (err) => {
+    console.log('Uncaught Exception:', err.message);
+    console.log(err.stack);
 });
 
 // Start server
